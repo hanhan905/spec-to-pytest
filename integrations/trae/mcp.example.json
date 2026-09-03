@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y", "@playwright/mcp@0.0.80", "--isolated", "--codegen", "python",
+        "--output-dir", "reports/mcp",
+        "--allowed-origins", "http://127.0.0.1:8000;http://localhost:8000",
+        "--block-service-workers", "--viewport-size", "1440x900"
+      ]
+    }
+  }
+}

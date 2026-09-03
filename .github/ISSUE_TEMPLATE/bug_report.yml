@@ -1,0 +1,24 @@
+name: Reproducible bug
+description: Report a problem using synthetic data and local reproduction steps.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Expected and observed behavior
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Minimal reproduction and exact command
+      description: Do not include real credentials, raw traces, personal paths or private URLs.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: OS, Python, Playwright and workflow mode
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized result or error summary

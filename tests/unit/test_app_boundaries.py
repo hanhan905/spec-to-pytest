@@ -152,3 +152,66 @@ def test_rules_trim_before_checking_maximum_length(tmp_path: Path) -> None:
         )
         assert response.status_code == 201
         assert response.json()["title"] == "a" * 50
+
+
+def test_chunked_body_cannot_bypass_the_request_limit(tmp_path: Path) -> None:
+    with TestClient(create_app(settings_for(tmp_path))) as client:
+        login(client)
+        chunks = (b"x" * 65536 for _ in range(34))
+        response = client.post(
+            "/api/posts",
+            content=chunks,
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        assert response.status_code == 413
+        assert client.get("/api/posts").json()["total"] == 0
+
+
+def test_unicode_password_is_rejected_not_a_server_error(tmp_path: Path) -> None:
+    with TestClient(create_app(settings_for(tmp_path))) as client:
+        response = client.post("/api/login", json={"username": "admin", "password": "错误密码"})
+        assert response.status_code == 401
+
+
+def test_media_metadata_removed_and_reset_deletes_only_owned_image(tmp_path: Path) -> None:
+    raw = BytesIO()
+    photo = Image.new("RGB", (24, 16), "teal")
+    exif = photo.getexif()
+    exif[270] = "synthetic private metadata"
+    photo.save(raw, "JPEG", exif=exif)
+    with TestClient(create_app(settings_for(tmp_path))) as client:
+        login(client)
+        response = client.post(
+            "/api/posts",
+            data={"title": "metadata", "content": "check"},
+            files={"image": ("photo.jpg", raw.getvalue(), "image/jpeg")},
+        )
+        assert response.status_code == 201
+        image = client.get(response.json()["image_url"])
+        assert not Image.open(BytesIO(image.content)).getexif()
+        assert (
+            client.post(
+                "/api/reset", headers={"X-Practice-Control": "synthetic-control-for-tests"}
+            ).status_code
+            == 204
+        )
+        assert client.get(response.json()["image_url"]).status_code == 404
+        assert list((tmp_path / "media").iterdir()) == []
+
+
+def test_pixel_budget_checked_before_decode(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from practice_app import media
+
+    assert media.MAX_IMAGE_PIXELS == 20_000_000
+    monkeypatch.setattr(media, "MAX_IMAGE_PIXELS", 100)
+    with TestClient(create_app(settings_for(tmp_path))) as client:
+        login(client)
+        response = client.post(
+            "/api/posts",
+            data={"title": "pixels", "content": "check"},
+            files={"image": ("photo.png", make_image(), "image/png")},
+        )
+        assert response.status_code == 422
+        assert list((tmp_path / "media").iterdir()) == []

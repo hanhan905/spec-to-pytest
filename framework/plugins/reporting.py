@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import shutil
 from collections.abc import Generator
 from pathlib import Path
@@ -44,27 +45,35 @@ def pytest_runtest_makereport(
 ) -> Generator[None, Result[TestReport], None]:
     outcome = yield
     report = outcome.get_result()
-    if report.when != "call" or not report.failed:
+    if not report.failed:
         return
 
     function_item = cast(pytest.Function, item)
     page = function_item.funcargs.get("configured_page") or function_item.funcargs.get("page")
     if isinstance(page, Page) and not page.is_closed():
-        allure.attach(
-            page.screenshot(full_page=True),
-            name="failure-screenshot",
-            attachment_type=allure.attachment_type.PNG,
-        )
-        allure.attach(
-            page.content(),
-            name="page-source",
-            attachment_type=allure.attachment_type.HTML,
-        )
+        try:
+            allure.attach(
+                page.screenshot(full_page=True),
+                name="failure-screenshot",
+                attachment_type=allure.attachment_type.PNG,
+            )
+            allure.attach(
+                page.content(), name="page-source", attachment_type=allure.attachment_type.HTML
+            )
+        except Exception as error:
+            logging.getLogger(__name__).warning(
+                "Evidence capture unavailable: %s", type(error).__name__
+            )
 
     recorder = function_item.funcargs.get("network_recorder")
     if isinstance(recorder, NetworkRecorder):
-        allure.attach(
-            json.dumps(recorder.serializable(), ensure_ascii=False, indent=2),
-            name="network-responses",
-            attachment_type=allure.attachment_type.JSON,
-        )
+        try:
+            allure.attach(
+                json.dumps(recorder.serializable(), ensure_ascii=False, indent=2),
+                name="network-responses",
+                attachment_type=allure.attachment_type.JSON,
+            )
+        except Exception as error:
+            logging.getLogger(__name__).warning(
+                "Network evidence unavailable: %s", type(error).__name__
+            )

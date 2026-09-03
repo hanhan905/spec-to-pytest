@@ -1,0 +1,73 @@
+name: Checked local testing workflow
+
+on: [push, pull_request, workflow_dispatch]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.12', '3.14']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          python-version: ${{ matrix.python }}
+      - run: uv sync --frozen --extra test --extra dev
+      - run: make check
+
+  browser:
+    runs-on: ubuntu-latest
+    env:
+      AUTO_BASE_URL: http://127.0.0.1:8765
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          python-version: '3.12'
+      - run: uv sync --frozen --extra test --extra dev
+      - run: uv run --frozen playwright install --with-deps chromium
+      - name: Healthy baseline
+        run: make baseline
+      - name: Historical candidate replay, not fresh AI generation
+        run: make replay
+      - name: Expected-defect demonstration; inner result must fail
+        run: make bug-demo
+      - name: Synthetic repair and evidence-tampering regression
+        run: uv run --frozen pytest tests/integration -q
+      - name: Export aggregate allowlist only
+        if: always()
+        run: uv run --frozen python -m scripts.export_public_summary
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: safe-run-summaries
+          path: reports/public/*.json
+          retention-days: 7
+          if-no-files-found: ignore
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify and run pinned Gitleaks against all refs
+        shell: bash
+        run: |
+          set -euo pipefail
+          scan_tools=$(mktemp -d)
+          curl --fail --location --silent --show-error \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz \
+            --output "$scan_tools/gitleaks.tar.gz"
+          printf '%s  %s\n' '551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb' "$scan_tools/gitleaks.tar.gz" | sha256sum --check
+          tar -xzf "$scan_tools/gitleaks.tar.gz" -C "$scan_tools" gitleaks
+          "$scan_tools/gitleaks" git . --log-opts="--all" --redact=100 --no-banner --log-level=error

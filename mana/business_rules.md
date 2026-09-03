@@ -1,43 +1,73 @@
-# 本地内容社区业务规则
+# Local content-community rules
 
-## 账号与权限
+These are expected behavior, not observations inferred from a passing run.
+The application is a synthetic local test target, not a real social network.
 
-- 演示账号：`admin / admin123`；
-- 未登录用户访问 `/feed` 或 `/publish` 时跳转到 `/login`；
-- 发布、点赞和评论必须登录；
-- `/api/reset` 仅用于本地测试批次的数据复位。
+## AUTH-01 — Authentication
 
-## 发布内容
+Anonymous visits to `/feed` and `/publish` redirect to `/login`. Community APIs require a
+valid login session and reject anonymous requests with 401. Synthetic accounts are
+`admin / admin123` and `viewer / viewer123`; neither may be used for real services.
+Both demo accounts can use community functions. Role labels are not a new RBAC promise.
 
-- 标题必填，去除首尾空白后长度为 1～50 个字符；
-- 正文必填，去除首尾空白后长度为 1～500 个字符；
-- 标签可选，使用逗号分隔，去除空白并按首次出现顺序去重；
-- 图片可选，只接受 `image/png` 或 `image/jpeg`；
-- 图片不得超过 2 MB；
-- 发布成功后返回内容 ID，并可在内容广场中被搜索到。
+## SESSION-01 — Sessions
 
-## 搜索
+The session identifier is opaque, expires and is revoked on logout. Setting a username as
+the cookie value must not authenticate. Restarting the app invalidates sessions; users log in again.
 
-- 搜索同时匹配标题、正文和标签；
-- 匹配不区分英文大小写；
-- 无匹配项时显示“没有找到匹配内容”；
-- 无内容且未输入查询时显示“暂无内容，发布第一条内容吧”。
+## POST-01 — Title
 
-## 点赞
+Trim leading/trailing whitespace first. The resulting title must contain 1–50 characters.
+Character counts use Unicode code points (including emoji), consistently in Python and the UI.
+Blank and over-limit values are rejected without creating a post.
 
-- 点赞是当前用户的切换操作；
-- 第一次点击后为已点赞，计数增加 1；
-- 再次点击后取消点赞，计数减少 1；
-- 按钮的 `aria-pressed`、显示文本和接口计数必须一致。
+## POST-02 — Body
 
-## 评论
+Trim first. Body text must contain 1–500 characters. A successful post can be found in the feed.
 
-- 评论去除首尾空白后长度为 1～100 个字符；
-- 空白评论和超过 100 个字符的评论被拒绝；
-- 成功评论立即显示在对应内容下；
-- 评论列表长度、接口 `comment_count` 和页面计数必须一致。
+## TAGS-01 — Tags
 
-## 缺陷注入
+Split on commas, trim each item, discard empty items and deduplicate exact values in first-seen order.
 
-设置 `PRACTICE_BUG_MODE=comment_counter` 时，评论会被保存，但 `comment_count` 故意不
-更新。Agent 必须把该现象视为业务缺陷候选，不能修改断言或规则来让测试通过。
+## MEDIA-01 — Real images
+
+Images are optional. Only actual PNG/JPEG content with matching declared type is accepted.
+Maximum input size is 2 MiB (2,097,152 bytes); maximum decoded size is 20,000,000 pixels.
+Reject corrupt/oversized content. Store under server-generated names, strip metadata and render
+the image in its post. A failed publish must not expose an orphan image resource.
+
+## SEARCH-01 — Search matching
+
+Search title, body and tags using case-insensitive substring matching. Empty query lists all posts.
+
+## SEARCH-02 — Empty states
+
+An empty feed says “暂无内容，发布第一条内容吧”. A query without matches says “没有找到匹配内容”.
+
+## LIKE-01 — Like state
+
+Like is a per-user toggle. One user's first click increments the count, the second decrements it.
+The API count, visible count and button `aria-pressed` state must agree.
+
+## COMMENT-01 — Comments
+
+Trim first. Comment length must be 1–100 characters. Rejected comments do not change state.
+Accepted comments appear immediately; API count, UI count and comment-list length must agree.
+
+## PERSIST-01 — Content persistence
+
+Content, images, likes and comments survive page refresh/navigation and application restart when
+the same data directory is used. Browser refresh tests alone do not establish restart persistence.
+Separate run data directories must not affect one another.
+
+## CONTROL-01 — Test-only reset
+
+Reset is unavailable in ordinary mode. In explicit test mode it requires the instance's control
+credential and clears only that instance's content and stored media. Do not send this credential
+through browser tools or store it in reusable step knowledge.
+
+## INJECT-01 — Known-defect demonstration
+
+In `comment_counter` mode, comments are saved while the count is intentionally not incremented.
+This violates COMMENT-01. Tests must retain the failed business assertion; never change the
+expected count to zero to make this mode pass. An outer check may verify that the defect was detected.

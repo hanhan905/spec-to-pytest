@@ -10,8 +10,8 @@ const error = document.querySelector('#publish-error');
 const submit = document.querySelector('#publish-button');
 
 function updateCounts() {
-  titleCount.textContent = `${titleInput.value.length}/50`;
-  contentCount.textContent = `${contentInput.value.length}/500`;
+  titleCount.textContent = `${Array.from(titleInput.value.trim()).length}/50`;
+  contentCount.textContent = `${Array.from(contentInput.value.trim()).length}/500`;
 }
 
 titleInput.addEventListener('input', updateCounts);

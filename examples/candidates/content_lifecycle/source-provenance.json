@@ -1,0 +1,21 @@
+{
+  "source_checkpoint": "28a0f59 with local generated assets",
+  "original_run_id": "20260821T163455Z-content_lifecycle-8aafd9",
+  "original_test_hashes": {
+    "test_content_lifecycle_CONTENT_001.py": "b1b65c3bf1a8de8c5d27d9172ae30da547295bd15c320eab5a9fb6baf7698d6a",
+    "test_content_lifecycle_CONTENT_002.py": "319a5680ea4b4032b884c864e73df2e27decda0e4558e54995e77ce5353d88a0",
+    "test_content_lifecycle_CONTENT_003.py": "447b7c9bb71ade0b525beec69b60b1e237a3fcd139fb15c80fd895c1782f9fa0",
+    "test_content_lifecycle_CONTENT_004.py": "d9f94b1b50bb4fe04b6c829ed0a25fcb092466d9117e55f2ab0c395c24306532",
+    "test_content_lifecycle_CONTENT_005.py": "cca6887da26b0a5bcfd8b9bbb5b6156c831bf0ee82f2809cb44893be62694bab",
+    "test_content_lifecycle_CONTENT_006.py": "72aed05d207dab54e64cd912a117569b1ec0aa798b975f3770587a2c10745da3",
+    "test_content_lifecycle_CONTENT_007.py": "0009bb7089567efaf4e2b75176c43ebdc806be269691bb43fd3920c380c3324c",
+    "test_content_lifecycle_CONTENT_008.py": "d6492cd0870275a1246c1dfa94660f6b6047ea13731275cbebd2f9e11425c255",
+    "test_content_lifecycle_CONTENT_009.py": "3906624a33976809d1ec0f48c7d56e6d76a5d234e7bf3a10b1ac19c4fbcb57f0",
+    "test_content_lifecycle_CONTENT_010.py": "f7d01088ca99e4eed8883506621b030e75181d4df0665f48cb3b641577ca812e",
+    "test_content_lifecycle_CONTENT_011.py": "9a930d62e7b1097a158c1ab4f6a1a5fde1159e6f9d32994eae5b00737e50f51d",
+    "test_content_lifecycle_CONTENT_012.py": "fb4f43e242f43014d594da4d0498b78e2527af2337c19aa812282cc4361b87cf",
+    "test_content_lifecycle_CONTENT_013.py": "2ee56eae3472b07c678a8f6db839218484bdd740f85a6159ca6ef2f2a98638e4"
+  },
+  "review_status": "assistant_reviewed_pending_maintainer",
+  "fresh_trae_generation": false
+}

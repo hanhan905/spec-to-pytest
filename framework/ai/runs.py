@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import json
+import platform
 import re
 from datetime import UTC, datetime
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
 from framework.ai.contracts import RunManifest
+from framework.ai.integrity import application_fingerprint, protected_hashes
 
 
 def write_json(path: Path, payload: Any, *, exclusive: bool = False) -> None:
@@ -24,6 +27,21 @@ def create_run(scenario_id: str, reports_root: Path) -> Path:
     run_id = f"{datetime.now(UTC):%Y%m%dT%H%M%SZ}-{scenario}-{uuid4().hex[:8]}"
     run_dir = reports_root / run_id
     run_dir.mkdir(parents=True, exist_ok=False)
+    project = Path(__file__).resolve().parents[2]
+    versions: dict[str, str] = {}
+    for name in (
+        "pytest",
+        "playwright",
+        "pytest-playwright",
+        "allure-pytest",
+        "fastapi",
+        "starlette",
+        "pillow",
+    ):
+        try:
+            versions[name] = version(name)
+        except PackageNotFoundError:
+            versions[name] = "not_installed"
     write_json(
         run_dir / "run.json",
         {
@@ -32,6 +50,14 @@ def create_run(scenario_id: str, reports_root: Path) -> Path:
             "created_at": datetime.now(UTC).isoformat(),
             "attempts": [],
             "repairs": [],
+            "protected_hashes": protected_hashes(project),
+            "application_fingerprint": application_fingerprint(project),
+            "environment": {
+                "python": platform.python_version(),
+                "platform": platform.system(),
+                "architecture": platform.machine(),
+                "packages": versions,
+            },
         },
         exclusive=True,
     )
@@ -44,6 +70,7 @@ def write_summary(run_dir: Path, manifest: RunManifest) -> None:
         f"# Run {manifest.run_id}",
         "",
         f"Quality gate: **{manifest.quality_gate}**",
+        f"Workflow source: `{manifest.source}`",
         "",
         "Counts refer to unique planned cases, not attempts.",
         "",

@@ -1,6 +1,7 @@
 import socket
 from pathlib import Path
 
+import httpx
 import pytest
 
 from framework.runtime.service import OwnedApp, assert_serial, parse_local_url
@@ -39,3 +40,36 @@ def test_occupied_port_is_not_reused_or_killed(tmp_path: Path) -> None:
             pass
         assert occupied.getsockname()[1] == port
         assert not (tmp_path / "data").exists()
+
+
+def test_owned_service_restarts_with_persistent_data_but_new_sessions(tmp_path: Path) -> None:
+    with socket.socket() as port_probe:
+        port_probe.bind(("127.0.0.1", 0))
+        port = port_probe.getsockname()[1]
+    origin = f"http://127.0.0.1:{port}"
+    with httpx.Client(base_url=origin, trust_env=False) as client:
+        with OwnedApp(origin, tmp_path / "data", tmp_path / "first.log") as first:
+            assert (
+                client.post(
+                    "/api/login", json={"username": "admin", "password": "admin123"}
+                ).status_code
+                == 200
+            )
+            assert (
+                client.post(
+                    "/api/posts", data={"title": "restart", "content": "retained"}
+                ).status_code
+                == 201
+            )
+            first_id = client.get("/health").json()["instance_id"]
+        assert first.process is not None and first.process.poll() is not None
+        with OwnedApp(origin, tmp_path / "data", tmp_path / "second.log"):
+            assert client.get("/api/profile").status_code == 401
+            assert (
+                client.post(
+                    "/api/login", json={"username": "admin", "password": "admin123"}
+                ).status_code
+                == 200
+            )
+            assert client.get("/api/posts").json()["total"] == 1
+            assert client.get("/health").json()["instance_id"] != first_id

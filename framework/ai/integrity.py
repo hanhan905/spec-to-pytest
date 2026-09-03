@@ -10,13 +10,27 @@ def digest(path: Path) -> str:
 
 
 def source_files(root: Path) -> list[Path]:
-    paths = [root / "pyproject.toml", root / "uv.lock", root / "AGENTS.md"]
-    for folder in ("framework", "practice_app", "scripts", "tests", "mana", "config"):
+    paths = [
+        root / name for name in ("pyproject.toml", "uv.lock", "AGENTS.md", ".gitignore", "Makefile")
+    ]
+    for folder in (
+        "framework",
+        "practice_app",
+        "scripts",
+        "tests",
+        "mana",
+        "config",
+        "examples",
+        "integrations",
+        ".agents",
+    ):
         paths.extend(
             path
             for path in (root / folder).rglob("*")
             if path.is_file()
-            and "__pycache__" not in path.parts
+            and not {"__pycache__", "node_modules", ".git", ".venv"}.intersection(
+                path.relative_to(root).parts
+            )
             and path.suffix in {".py", ".json", ".csv", ".md", ".js", ".css", ".html"}
         )
     existing = sorted(path for path in paths if path.is_file())
@@ -39,12 +53,29 @@ def generated_hashes(root: Path, run_id: str) -> dict[str, str]:
     return {
         path.relative_to(root).as_posix(): digest(path)
         for path in sorted((root / "tests/generated" / run_id).rglob("*.py"))
+        if validate_generated_path(root, path)
     }
+
+
+def validate_generated_path(root: Path, path: Path) -> bool:
+    if path.is_symlink() or not path.resolve().is_relative_to(root.resolve()):
+        raise ValueError("Generated files must be real files inside this workspace")
+    return True
+
+
+def application_fingerprint(root: Path) -> str:
+    rows = [
+        f"{path.relative_to(root).as_posix()}:{digest(path)}"
+        for path in source_files(root)
+        if path.is_relative_to(root / "practice_app")
+    ]
+    return hashlib.sha256("\n".join(rows).encode()).hexdigest()
 
 
 def assertion_signatures(root: Path, run_id: str) -> dict[str, list[str] | None]:
     result: dict[str, list[str] | None] = {}
     for path in sorted((root / "tests/generated" / run_id).rglob("*.py")):
+        validate_generated_path(root, path)
         name = path.relative_to(root).as_posix()
         try:
             tree = ast.parse(path.read_text(encoding="utf-8"))
@@ -81,3 +112,14 @@ def check_assertions(
     for path, signature in previous.items():
         if path not in current or (signature is not None and current[path] != signature):
             raise ValueError("Frozen assertions changed or a generated file was removed")
+
+
+def require_repair_budget(rounds: int, kind: str | None, note: str | None) -> None:
+    if (
+        rounds >= 3
+        or rounds < 0
+        or kind not in {"locator", "synchronisation", "data", "syntax"}
+        or not note
+        or not note.strip()
+    ):
+        raise ValueError("Changed generated code requires a documented repair within three rounds")

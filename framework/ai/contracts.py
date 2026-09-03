@@ -55,7 +55,12 @@ class TestPlan(StrictModel):
     scenario_id: Identifier
     generated_at: datetime
     source: Literal[
-        "baseline", "synthetic", "approved_replay", "trae_orchestrated", "trae_single_agent_skill"
+        "baseline",
+        "synthetic",
+        "approved_replay",
+        "candidate_replay",
+        "trae_orchestrated",
+        "trae_single_agent_skill",
     ]
     provenance: dict[str, str] = Field(default_factory=dict)
     reduced_scope_reason: str | None = None
@@ -90,6 +95,7 @@ class StepInfoRecord(StrictModel):
     source_run_id: Identifier
     source_case_id: CaseId
     app_version: str = Field(min_length=1)
+    app_fingerprint: str = Field(pattern=r"^[a-f0-9]{64}$")
     evidence_paths: list[str] = Field(min_length=1)
 
 
@@ -123,6 +129,8 @@ class CaseRunResult(StrictModel):
     nodeid: str | None = None
     status: CaseStatus
     repair_attempts: int = Field(default=0, ge=0, le=3)
+    passed_after_repair: bool = False
+    attempt_ids: list[Identifier] = Field(default_factory=list)
     final_reason: str = Field(min_length=1)
     failure_phase: Literal["setup", "call", "teardown", "mapping", "environment"] | None = None
     evidence_paths: list[str] = Field(default_factory=list)
@@ -133,6 +141,15 @@ class RunManifest(StrictModel):
     schema_version: Literal["2.0"] = "2.0"
     run_id: Identifier
     scenario_id: Identifier
+    source: Literal[
+        "baseline",
+        "synthetic",
+        "candidate_replay",
+        "approved_replay",
+        "trae_orchestrated",
+        "trae_single_agent_skill",
+        "unrecorded",
+    ] = "unrecorded"
     completed: bool
     final_attempt: Identifier
     finished_at: datetime

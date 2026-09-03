@@ -8,6 +8,7 @@ def contained_path(root: Path, relative: str, *, must_exist: bool = True) -> Pat
     if (
         not relative
         or "\\" in relative
+        or ":" in relative
         or path.is_absolute()
         or PureWindowsPath(relative).drive
         or ".." in path.parts

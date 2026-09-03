@@ -26,6 +26,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import RequestResponseEndpoint
 
+from practice_app.body_limit import BodyLimitMiddleware
 from practice_app.media import MAX_IMAGE_BYTES, MediaStore
 from practice_app.models import (
     CommentRequest,
@@ -105,6 +106,7 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
         "/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static"
     )
     application.include_router(router)
+    application.add_middleware(BodyLimitMiddleware, max_bytes=MAX_IMAGE_BYTES + 65536)
     return application
 
 
@@ -123,6 +125,11 @@ def health(request: Request) -> dict[str, str]:
 @router.get("/", include_in_schema=False)
 def root() -> RedirectResponse:
     return RedirectResponse("/login", status_code=302)
+
+
+@router.get("/favicon.ico", include_in_schema=False)
+def favicon() -> Response:
+    return Response(status_code=204)
 
 
 @router.get("/login", response_class=HTMLResponse, include_in_schema=False)

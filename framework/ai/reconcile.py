@@ -68,9 +68,10 @@ def reconcile(
     elif events[0].get("kind") != "session_start" or events[-1].get("kind") != "session_finish":
         errors.append("event_sequence_invalid")
     if (
-        process.get("exit_code") not in (0, 1)
-        or not process.get("completed")
-        or not process.get("full_suite")
+        type(process.get("exit_code")) is not int
+        or process.get("exit_code") not in (0, 1)
+        or process.get("completed") is not True
+        or process.get("full_suite") is not True
     ):
         errors.append("process_not_a_completed_acceptance_run")
     if finishes and (
@@ -202,6 +203,36 @@ def reconcile(
             for name in ("collection.json", "events.jsonl", "junit.xml", "process.json")
             if (attempt / name).is_file()
         ]
+        media_events = reports.get(case.case_id, {}).values()
+        media_expected = any(event.get("media_expected") for event in media_events)
+        media_paths: list[str] = []
+        for event in media_events:
+            relative = event.get("artifact_dir")
+            if relative is not None:
+                try:
+                    if not isinstance(relative, str):
+                        raise ValueError("invalid artifact directory")
+                    directory = contained_path(attempt, relative, must_exist=False)
+                    for file in directory.rglob("*") if directory.is_dir() else []:
+                        if file.is_file():
+                            value = file.relative_to(run_dir).as_posix()
+                            contained_path(run_dir, value)
+                            media_paths.append(value)
+                except ValueError:
+                    errors.append(f"unsafe_artifact_path:{case.case_id}")
+        evidence.extend(sorted(set(media_paths)))
+        missing_media = [
+            label
+            for label, suffix in (("screenshot", ".png"), ("trace", ".zip"), ("video", ".webm"))
+            if not any(path.endswith(suffix) for path in media_paths)
+        ]
+        unavailable = (
+            "Not retained: " + ", ".join(missing_media)
+            if media_expected
+            and missing_media
+            and status in {CaseStatus.FAILED, CaseStatus.BLOCKED}
+            else None
+        )
         results.append(
             CaseRunResult(
                 case_id=case.case_id,
@@ -210,9 +241,7 @@ def reconcile(
                 final_reason=reason,
                 failure_phase=failure_phase,
                 evidence_paths=evidence,
-                artifact_unavailable_reason="Browser setup did not complete; see attempt artifacts"
-                if status == CaseStatus.BLOCKED
-                else None,
+                artifact_unavailable_reason=unavailable,
             )
         )
     if process.get("exit_code") == 0 and any(
@@ -242,6 +271,7 @@ def reconcile(
     return RunManifest(
         run_id=plan.run_id,
         scenario_id=plan.scenario_id,
+        source=plan.source,
         completed=True,
         final_attempt=attempt_id,
         finished_at=datetime.now(UTC),

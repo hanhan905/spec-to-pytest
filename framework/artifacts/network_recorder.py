@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from urllib.parse import urlsplit, urlunsplit
 
 from playwright.sync_api import Page, Response
 
@@ -24,7 +25,15 @@ class NetworkRecorder:
             ResponseEvent(
                 method=response.request.method,
                 status=response.status,
-                url=response.url,
+                url=urlunsplit(
+                    (
+                        urlsplit(response.url).scheme,
+                        urlsplit(response.url).netloc.split("@")[-1],
+                        urlsplit(response.url).path,
+                        "",
+                        "",
+                    )
+                ),
             )
         )
 

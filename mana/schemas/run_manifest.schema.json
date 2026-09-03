@@ -30,6 +30,19 @@
           "title": "Repair Attempts",
           "type": "integer"
         },
+        "passed_after_repair": {
+          "default": false,
+          "title": "Passed After Repair",
+          "type": "boolean"
+        },
+        "attempt_ids": {
+          "items": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
+            "type": "string"
+          },
+          "title": "Attempt Ids",
+          "type": "array"
+        },
         "final_reason": {
           "minLength": 1,
           "title": "Final Reason",
@@ -109,6 +122,20 @@
     "scenario_id": {
       "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
       "title": "Scenario Id",
+      "type": "string"
+    },
+    "source": {
+      "default": "unrecorded",
+      "enum": [
+        "baseline",
+        "synthetic",
+        "candidate_replay",
+        "approved_replay",
+        "trae_orchestrated",
+        "trae_single_agent_skill",
+        "unrecorded"
+      ],
+      "title": "Source",
       "type": "string"
     },
     "completed": {

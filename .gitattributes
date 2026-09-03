@@ -1,0 +1,4 @@
+# Stable source bytes across checkouts. CSV fixtures retain their recorded bytes.
+* text=auto eol=lf
+*.csv -text diff whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+*.png binary

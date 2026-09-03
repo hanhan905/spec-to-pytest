@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import difflib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -22,6 +24,7 @@ from framework.ai.integrity import (
     digest,
     generated_hashes,
     protected_hashes,
+    require_repair_budget,
     source_files,
 )
 from framework.ai.runs import create_run, write_json
@@ -49,12 +52,19 @@ def execute(args: argparse.Namespace, pytest_args: list[str]) -> int:
         if not run_dir.is_relative_to(ROOT / "reports/runs"):
             raise ValueError("Run directory must be owned by this workspace")
         metadata = json.loads((run_dir / "run.json").read_text())
+        if (
+            not isinstance(metadata, dict)
+            or not isinstance(metadata.get("attempts"), list)
+            or not isinstance(metadata.get("repairs"), list)
+        ):
+            raise ValueError("Run metadata has an invalid structure")
         if metadata["run_id"] != run_dir.name:
             raise ValueError("Run identity mismatch")
         is_generated = args.plan is not None or metadata.get("source") not in {None, "baseline"}
         run_id = metadata["run_id"]
         if not metadata["attempts"]:
-            metadata["protected_hashes"] = protected_hashes(ROOT)
+            if metadata["protected_hashes"] != protected_hashes(ROOT):
+                raise ValueError("Protected inputs changed since run preparation")
             metadata["assertions"] = assertion_signatures(ROOT, run_id) if is_generated else {}
             metadata["generated_hashes"] = generated_hashes(ROOT, run_id)
             metadata["source"] = "baseline"
@@ -66,6 +76,21 @@ def execute(args: argparse.Namespace, pytest_args: list[str]) -> int:
                 plan = TestPlan.model_validate_json(args.plan.read_text())
                 if plan.run_id != run_id or plan.scenario_id != metadata["scenario_id"]:
                     raise ValueError("Plan and prepared run identifiers differ")
+                with (run_dir / "data.csv").open(newline="", encoding="utf-8") as stream:
+                    data_ids = {row["data_id"] for row in csv.DictReader(stream)}
+                rule_ids = set(
+                    re.findall(
+                        r"^## ([A-Z]+-\d+) —",
+                        (ROOT / "mana/business_rules.md").read_text(),
+                        re.MULTILINE,
+                    )
+                )
+                if any(
+                    not set(case.data_ids).issubset(data_ids)
+                    or not set(case.rule_ids).issubset(rule_ids)
+                    for case in plan.cases
+                ):
+                    raise ValueError("Plan refers to missing data IDs or unknown business rules")
                 write_json(
                     run_dir / "plan.json",
                     plan.model_dump(mode="json"),
@@ -85,15 +110,9 @@ def execute(args: argparse.Namespace, pytest_args: list[str]) -> int:
                 check_assertions(metadata["assertions"], current)
                 hashes = generated_hashes(ROOT, run_id)
                 if hashes != metadata["generated_hashes"]:
-                    if (
-                        not args.repair_kind
-                        or not args.repair_note
-                        or len(metadata["repairs"]) >= 3
-                    ):
-                        raise ValueError(
-                            "Changed generated code requires a documented repair "
-                            "within three rounds"
-                        )
+                    require_repair_budget(
+                        len(metadata["repairs"]), args.repair_kind, args.repair_note
+                    )
                     previous = run_dir / "attempts" / metadata["attempts"][-1]
                     collection = json.loads((previous / "collection.json").read_text())["items"]
                     changed = {
@@ -143,6 +162,10 @@ def execute(args: argparse.Namespace, pytest_args: list[str]) -> int:
         metadata["attempts"].append(attempt_id)
         write_json(run_dir / "run.json", metadata)
         for source in source_files(ROOT):
+            if source.is_relative_to(ROOT / "tests/generated") and not source.is_relative_to(
+                ROOT / "tests/generated" / run_id
+            ):
+                continue
             destination = attempt / "source" / source.relative_to(ROOT)
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(source, destination)
@@ -241,7 +264,7 @@ def execute(args: argparse.Namespace, pytest_args: list[str]) -> int:
         receipt = {
             path.relative_to(attempt).as_posix(): digest(path)
             for path in attempt.rglob("*")
-            if path.is_file() and "app-data" not in path.relative_to(attempt).parts
+            if path.is_file()
         }
         write_json(attempt / "receipt.json", receipt, exclusive=True)
         manifest = finalise(run_dir)
@@ -272,7 +295,7 @@ def main() -> int:
     args, remaining = parser.parse_known_args()
     try:
         return execute(args, remaining)
-    except (ValueError, OSError) as error:
+    except (ValueError, OSError, KeyError, TypeError) as error:
         print(f"Execution blocked: {type(error).__name__}", file=sys.stderr)
         return 2
 

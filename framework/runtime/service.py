@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import errno
 import os
 import secrets
 import socket
@@ -53,9 +54,14 @@ class OwnedApp:
 
     def __enter__(self) -> OwnedApp:
         probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
             probe.bind(("127.0.0.1", self.port))
         except OSError as error:
+            if error.errno != errno.EADDRINUSE:
+                raise RuntimeError(
+                    "Cannot bind the configured loopback port; check host permissions"
+                ) from error
             raise RuntimeError(
                 f"Configured port {self.port} is occupied; refusing to reuse it"
             ) from error

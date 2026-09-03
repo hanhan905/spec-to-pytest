@@ -7,7 +7,7 @@ import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -82,6 +82,13 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) ->
     state = item.config.stash.get(KEY, None)
     if state is None:
         return
+    function = cast(pytest.Function, item)
+    output = function.funcargs.get("output_path")
+    artifact_dir = None
+    if isinstance(output, str):
+        directory = Path(output).resolve()
+        if directory.is_relative_to(state.root.resolve()):
+            artifact_dir = directory.relative_to(state.root.resolve()).as_posix()
     state.emit(
         {
             "kind": "report",
@@ -91,6 +98,8 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) ->
             "outcome": report.outcome,
             "wasxfail": bool(getattr(report, "wasxfail", False)),
             "duration": report.duration,
+            "media_expected": "page" in function.fixturenames,
+            "artifact_dir": artifact_dir,
         }
     )
 

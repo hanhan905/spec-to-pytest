@@ -1,0 +1,422 @@
+{
+  "schema_version": "2.0",
+  "run_id": "20260821T163455Z-content_lifecycle-8aafd9",
+  "scenario_id": "content_lifecycle",
+  "generated_at": "2026-08-21T16:34:55Z",
+  "cases": [
+    {
+      "scenario_id": "content_lifecycle",
+      "case_id": "CONTENT_001",
+      "title": "发布内容后可搜索、点赞和评论并刷新验证状态保留",
+      "priority": "P0",
+      "preconditions": [
+        "admin 已登录",
+        "社区数据已复位"
+      ],
+      "steps": [
+        "复位本地社区数据",
+        "在发布页填写标题、正文和标签并发布",
+        "回到内容广场按标题搜索该内容",
+        "点赞并验证按钮 aria-pressed、文本和计数一致",
+        "提交评论并验证评论文本与评论计数",
+        "刷新页面后再次验证内容、点赞和评论状态保留"
+      ],
+      "expected_results": [
+        "发布成功状态可见",
+        "搜索结果包含该内容卡片且正文与标签可见",
+        "点赞按钮 aria-pressed 为 true 且显示 点赞 1",
+        "评论立即显示且评论计数为 1",
+        "刷新后内容、点赞状态和评论计数保持一致"
+      ],
+      "automation_candidate": true,
+      "unsupported_reason": null,
+      "rule_ids": [
+        "AUTH-01",
+        "POST-01",
+        "SEARCH-01",
+        "LIKE-01",
+        "COMMENT-01"
+      ],
+      "data_ids": [
+        "BASE_001"
+      ],
+      "required": true
+    },
+    {
+      "scenario_id": "content_lifecycle",
+      "case_id": "CONTENT_002",
+      "title": "标题最小长度 1 个字符可以发布并被搜索到",
+      "priority": "P1",
+      "preconditions": [
+        "admin 已登录",
+        "社区数据已复位"
+      ],
+      "steps": [
+        "复位本地社区数据",
+        "在发布页输入 1 个字符标题和有效正文",
+        "发布内容",
+        "回到内容广场按标题搜索该内容"
+      ],
+      "expected_results": [
+        "发布成功状态可见",
+        "搜索结果包含该内容卡片"
+      ],
+      "automation_candidate": true,
+      "unsupported_reason": null,
+      "rule_ids": [
+        "POST-01"
+      ],
+      "data_ids": [
+        "TITLE_MIN_001"
+      ],
+      "required": true
+    },
+    {
+      "scenario_id": "content_lifecycle",
+      "case_id": "CONTENT_003",
+      "title": "标题最大长度 50 个字符可以发布且完整保存",
+      "priority": "P1",
+      "preconditions": [
+        "admin 已登录",
+        "社区数据已复位"
+      ],
+      "steps": [
+        "复位本地社区数据",
+        "在发布页输入 50 个字符标题和有效正文",
+        "发布内容",
+        "回到内容广场按标题搜索该内容",
+        "验证标题完整显示为 50 个字符"
+      ],
+      "expected_results": [
+        "发布成功状态可见",
+        "搜索结果标题完整保存为 50 个字符"
+      ],
+      "automation_candidate": true,
+      "unsupported_reason": null,
+      "rule_ids": [
+        "POST-01"
+      ],
+      "data_ids": [
+        "TITLE_MAX_050"
+      ],
+      "required": true
+    },
+    {
+      "scenario_id": "content_lifecycle",
+      "case_id": "CONTENT_004",
+      "title": "空白标题被拒绝且不创建内容",
+      "priority": "P1",
+      "preconditions": [
+        "admin 已登录",
+        "社区数据已复位"
+      ],
+      "steps": [
+        "复位本地社区数据",
+        "在发布页输入仅含空格的标题和有效正文",
+        "发布内容",
+        "验证显示标题错误且未跳转成功状态",
+        "回到内容广场确认没有该内容"
+      ],
+      "expected_results": [
+        "发布被拒绝并显示标题错误",
+        "成功状态不显示",
+        "内容广场不包含该内容"
+      ],
+      "automation_candidate": true,
+      "unsupported_reason": null,
+      "rule_ids": [
+        "POST-01"
+      ],
+      "data_ids": [
+        "TITLE_BLANK"
+      ],
+      "required": true
+    },
+    {
+      "scenario_id": "content_lifecycle",
+      "case_id": "CONTENT_005",
+      "title": "标题超过 50 个字符通过发布接口返回 422 且不创建内容",
+      "priority": "P1",
+      "preconditions": [
+        "admin 已登录",
+        "社区数据已复位"
+      ],
+      "steps": [
+        "复位本地社区数据",
+        "以登录态调用发布接口提交 51 个字符标题",
+        "验证接口返回 422",
+        "查询内容列表确认没有新增内容"
+      ],
+      "expected_results": [
+        "发布接口返回状态码 422",
+        "内容列表数量不变"
+      ],
+      "automation_candidate": true,
+      "unsupported_reason": null,
+      "rule_ids": [
+        "POST-01"
+      ],
+      "data_ids": [
+        "TITLE_OVER_051"
+      ],
+      "required": true
+    },
+    {
+      "scenario_id": "content_lifecycle",
+      "case_id": "CONTENT_006",
+      "title": "正文最小长度 1 个字符可以发布",
+      "priority": "P1",
+      "preconditions": [
+        "admin 已登录",
+        "社区数据已复位"
+      ],
+      "steps": [
+        "复位本地社区数据",
+        "在发布页输入有效标题和 1 个字符正文",
+        "发布内容",
+        "回到内容广场按标题搜索并验证正文显示"
+      ],
+      "expected_results": [
+        "发布成功状态可见",
+        "搜索结果正文显示为 1 个字符"
+      ],
+      "automation_candidate": true,
+      "unsupported_reason": null,
+      "rule_ids": [
+        "POST-02"
+      ],
+      "data_ids": [
+        "CONTENT_MIN_001"
+      ],
+      "required": true
+    },
+    {
+      "scenario_id": "content_lifecycle",
+      "case_id": "CONTENT_007",
+      "title": "不支持的图片类型和超大图片通过发布接口被拒绝",
+      "priority": "P1",
+      "preconditions": [
+        "admin 已登录",
+        "社区数据已复位"
+      ],
+      "steps": [
+        "复位本地社区数据",
+        "以登录态调用发布接口上传 GIF 图片",
+        "验证接口返回 422 且提示仅支持 PNG 和 JPG",
+        "以登录态调用发布接口上传超过 2MB 的 PNG 图片",
+        "验证接口返回 422 且提示图片不得超过 2MB",
+        "查询内容列表确认两次均未创建内容"
+      ],
+      "expected_results": [
+        "GIF 图片返回 422 且错误信息为类型错误",
+        "超大 PNG 返回 422 且错误信息为大小错误",
+        "内容列表数量不变"
+      ],
+      "automation_candidate": true,
+      "unsupported_reason": null,
+      "rule_ids": [
+        "MEDIA-01"
+      ],
+      "data_ids": [],
+      "required": true
+    },
+    {
+      "scenario_id": "content_lifecycle",
+      "case_id": "CONTENT_008",
+      "title": "搜索无匹配与空广场显示正确的空状态",
+      "priority": "P2",
+      "preconditions": [
+        "admin 已登录",
+        "社区数据已复位"
+      ],
+      "steps": [
+        "复位本地社区数据",
+        "打开内容广场且未输入查询",
+        "验证显示暂无内容引导文案",
+        "发布一条内容",
+        "搜索一个不存在的唯一关键词",
+        "验证显示没有找到匹配内容且不显示内容卡片"
+      ],
+      "expected_results": [
+        "空广场显示暂无内容，发布第一条内容吧",
+        "无匹配搜索显示没有找到匹配内容",
+        "无匹配时不显示内容卡片"
+      ],
+      "automation_candidate": true,
+      "unsupported_reason": null,
+      "rule_ids": [
+        "SEARCH-02"
+      ],
+      "data_ids": [
+        "BASE_001"
+      ],
+      "required": true
+    },
+    {
+      "scenario_id": "content_lifecycle",
+      "case_id": "CONTENT_009",
+      "title": "未登录用户访问发布页和内容广场跳转到登录页",
+      "priority": "P0",
+      "preconditions": [
+        "浏览器没有登录 Cookie"
+      ],
+      "steps": [
+        "使用未登录的干净浏览器访问 /publish",
+        "验证跳转到 /login 且不显示发布表单",
+        "访问 /feed",
+        "验证跳转到 /login 且不显示内容广场"
+      ],
+      "expected_results": [
+        "访问 /publish 最终停在 /login",
+        "访问 /feed 最终停在 /login",
+        "发布表单和内容广场均不可见"
+      ],
+      "automation_candidate": true,
+      "unsupported_reason": null,
+      "rule_ids": [
+        "AUTH-01"
+      ],
+      "data_ids": [],
+      "required": true
+    },
+    {
+      "scenario_id": "content_lifecycle",
+      "case_id": "CONTENT_010",
+      "title": "重复点赞切换状态且刷新后计数保持一致",
+      "priority": "P1",
+      "preconditions": [
+        "admin 已登录",
+        "社区数据已复位",
+        "存在一条内容"
+      ],
+      "steps": [
+        "复位本地社区数据并发布一条内容",
+        "点击点赞验证 aria-pressed 为 true 且计数为 1",
+        "再次点击取消点赞验证 aria-pressed 为 false 且计数为 0",
+        "刷新页面后再次验证计数仍为 0"
+      ],
+      "expected_results": [
+        "首次点赞计数为 1",
+        "取消点赞计数为 0",
+        "刷新后点赞计数保持为 0"
+      ],
+      "automation_candidate": true,
+      "unsupported_reason": null,
+      "rule_ids": [
+        "LIKE-01"
+      ],
+      "data_ids": [
+        "LIKE_BASE"
+      ],
+      "required": true
+    },
+    {
+      "scenario_id": "content_lifecycle",
+      "case_id": "CONTENT_011",
+      "title": "发布点赞评论后离开页面再返回状态保留",
+      "priority": "P1",
+      "preconditions": [
+        "admin 已登录",
+        "社区数据已复位"
+      ],
+      "steps": [
+        "复位本地社区数据并发布一条内容",
+        "点赞并提交评论",
+        "导航到仪表盘页面",
+        "导航回内容广场并按标题搜索该内容",
+        "验证内容、点赞状态和评论计数均保留"
+      ],
+      "expected_results": [
+        "离开并返回后内容仍可见",
+        "点赞状态保留为已点赞且计数为 1",
+        "评论计数保留为 1"
+      ],
+      "automation_candidate": true,
+      "unsupported_reason": null,
+      "rule_ids": [
+        "PERSIST-01"
+      ],
+      "data_ids": [
+        "PERSIST_BASE"
+      ],
+      "required": true
+    },
+    {
+      "scenario_id": "content_lifecycle",
+      "case_id": "CONTENT_012",
+      "title": "评论长度边界与计数一致",
+      "priority": "P1",
+      "preconditions": [
+        "admin 已登录",
+        "社区数据已复位",
+        "存在一条内容"
+      ],
+      "steps": [
+        "复位本地社区数据并发布一条内容",
+        "提交 1 个字符评论验证成功",
+        "提交 100 个字符评论验证成功",
+        "提交 101 个字符评论验证被拒绝",
+        "验证评论计数等于 2 且评论列表长度为 2"
+      ],
+      "expected_results": [
+        "1 个字符评论成功显示",
+        "100 个字符评论成功显示",
+        "101 个字符评论被拒绝且不显示",
+        "评论计数为 2 且接口 comment_count 为 2"
+      ],
+      "automation_candidate": true,
+      "unsupported_reason": null,
+      "rule_ids": [
+        "COMMENT-01"
+      ],
+      "data_ids": [
+        "COMMENT_BASE",
+        "COMMENT_MIN_001",
+        "COMMENT_MAX_100",
+        "COMMENT_OVER_101"
+      ],
+      "required": true
+    },
+    {
+      "scenario_id": "content_lifecycle",
+      "case_id": "CONTENT_013",
+      "title": "搜索匹配正文和标签且不区分大小写并验证标签去重",
+      "priority": "P2",
+      "preconditions": [
+        "admin 已登录",
+        "社区数据已复位"
+      ],
+      "steps": [
+        "复位本地社区数据",
+        "发布包含重复标签和首尾空格的内容",
+        "验证标签去重后按首次出现顺序显示",
+        "按正文片段搜索验证可匹配",
+        "按标签搜索验证可匹配",
+        "用与原内容大小写不同的查询再次搜索验证仍可匹配"
+      ],
+      "expected_results": [
+        "重复标签被去重且按首次出现顺序显示",
+        "按正文搜索可匹配该内容",
+        "按标签搜索可匹配该内容",
+        "大小写不同的查询仍能匹配"
+      ],
+      "automation_candidate": true,
+      "unsupported_reason": null,
+      "rule_ids": [
+        "SEARCH-01",
+        "TAGS-01"
+      ],
+      "data_ids": [
+        "TAGS_DEDUP"
+      ],
+      "required": true
+    }
+  ],
+  "source": "candidate_replay",
+  "provenance": {
+    "original_run_id": "20260821T163455Z-content_lifecycle-8aafd9",
+    "review_status": "assistant_reviewed_pending_maintainer",
+    "adaptation": "v2 port; explicit markers, shared data loader, isolated reset",
+    "historical_host_and_model": "not_recorded_in_archived_assets"
+  }
+}

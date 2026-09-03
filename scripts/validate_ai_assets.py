@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -49,10 +50,16 @@ def main() -> None:
     parser.add_argument("kind", choices=[*CONTRACTS, "csv"])
     parser.add_argument("path", type=Path)
     args = parser.parse_args()
-    if args.kind == "csv":
-        validate_csv(args.path)
-    else:
-        validate_json(args.path, args.kind)
+    try:
+        if args.kind == "csv":
+            validate_csv(args.path)
+        else:
+            validate_json(args.path, args.kind)
+    except (ValueError, OSError) as error:
+        print(
+            f"Invalid {args.kind}: {type(error).__name__}; input values omitted.", file=sys.stderr
+        )
+        raise SystemExit(2) from None
     print(f"valid: {args.path}")
 
 

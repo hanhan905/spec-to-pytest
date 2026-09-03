@@ -140,6 +140,7 @@
         "baseline",
         "synthetic",
         "approved_replay",
+        "candidate_replay",
         "trae_orchestrated",
         "trae_single_agent_skill"
       ],

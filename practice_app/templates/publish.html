@@ -12,7 +12,7 @@
     <form class="publish-form" id="publish-form">
       <label for="title">标题 <span aria-hidden="true">*</span></label>
       <div class="field-with-count">
-        <input id="title" name="title" maxlength="50" required placeholder="请输入标题，1-50字" />
+        <input id="title" name="title" required placeholder="请输入标题，1-50字" />
         <span id="title-count" aria-live="polite">0/50</span>
       </div>
 
@@ -21,7 +21,6 @@
         <textarea
           id="content"
           name="content"
-          maxlength="500"
           required
           rows="3"
           placeholder="请输入正文，1-500字"

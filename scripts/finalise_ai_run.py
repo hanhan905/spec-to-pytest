@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from framework.ai.contracts import RunManifest
@@ -13,7 +14,7 @@ from framework.ai.runs import write_summary
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def finalise(run_dir: Path) -> RunManifest:
+def finalise(run_dir: Path, *, write_output: bool = True) -> RunManifest:
     metadata = json.loads(contained_path(run_dir, "run.json").read_text())
     attempts = metadata["attempts"]
     if not attempts:
@@ -37,10 +38,13 @@ def finalise(run_dir: Path) -> RunManifest:
             errors.append("missing_attempt_evidence")
     result = reconcile(run_dir, attempts[-1], integrity_errors=errors)
     for case in result.results:
+        case.attempt_ids = list(attempts)
         case.repair_attempts = sum(
             case.case_id in repair["case_ids"] for repair in metadata["repairs"]
         )
-    write_summary(run_dir, result)
+        case.passed_after_repair = case.status == "passed" and case.repair_attempts > 0
+    if write_output:
+        write_summary(run_dir, result)
     return result
 
 
@@ -48,7 +52,11 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("run_dir", type=Path)
     args = parser.parse_args()
-    result = finalise(args.run_dir.resolve())
+    try:
+        result = finalise(args.run_dir.resolve())
+    except (ValueError, OSError, KeyError, TypeError) as error:
+        print(f"Evidence validation blocked: {type(error).__name__}", file=sys.stderr)
+        raise SystemExit(2) from None
     print(json.dumps({"quality_gate": result.quality_gate, "counts": result.counts}))
     raise SystemExit({"passed": 0, "failed": 1, "blocked": 2}[result.quality_gate])
 

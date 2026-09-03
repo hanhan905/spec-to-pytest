@@ -96,7 +96,6 @@ function renderPost(post) {
   form.className = 'comment-form';
   const input = document.createElement('input');
   input.name = 'comment';
-  input.maxLength = 100;
   input.required = true;
   input.placeholder = '写下评论，1-100字';
   input.setAttribute('aria-label', `评论内容：${post.title}`);
