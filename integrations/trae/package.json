@@ -1,0 +1,9 @@
+{
+  "name": "spec-to-pytest-mcp-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pinned optional Playwright MCP runtime for local recording",
+  "dependencies": {
+    "@playwright/mcp": "0.0.80"
+  }
+}

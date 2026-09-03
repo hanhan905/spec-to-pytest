@@ -38,7 +38,7 @@ def main() -> None:
             "Evidence is stale or incomplete; inspect raw artifacts before rendering a report."
         )
     inputs = contained_path(run, f"attempts/{manifest.final_attempt}/allure-results")
-    output = run / "views" / f"allure-{uuid4().hex[:8]}"
+    output = ROOT / "reports/views" / run.name / f"allure-{uuid4().hex[:8]}"
     subprocess.run([command, "generate", str(inputs), "-o", str(output)], check=True)
     print(output)
 

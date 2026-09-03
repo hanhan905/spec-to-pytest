@@ -1,4 +1,4 @@
-.PHONY: help setup check baseline replay bug-demo report
+.PHONY: help setup check baseline replay bug-demo report integration mcp-setup mcp-probe
 
 help:
 	@echo "setup: frozen Python dependencies and Chromium download"
@@ -7,6 +7,9 @@ help:
 	@echo "replay: verify historical candidates; not a new AI generation or maintainer approval"
 	@echo "bug-demo: check expected failure while retaining the inner failed report"
 	@echo "report: optional Allure CLI view of the most recently summarized run"
+	@echo "integration: structured-check, request-cache and bounded-repair regression"
+	@echo "mcp-setup: install the locked optional Node runtime"
+	@echo "mcp-probe: real recorded MCP diagnostic, not a TRAE-host acceptance run"
 	@echo "Set AUTO_BASE_URL=http://127.0.0.1:8765 if port 8000 is occupied."
 
 setup:
@@ -32,3 +35,12 @@ bug-demo:
 
 report:
 	uv run --frozen python -m scripts.report
+
+integration:
+	uv run --frozen pytest tests/integration -q
+
+mcp-setup:
+	npm ci --prefix integrations/trae --ignore-scripts
+
+mcp-probe:
+	uv run --frozen python -m scripts.probe_mcp

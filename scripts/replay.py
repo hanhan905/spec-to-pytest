@@ -43,6 +43,7 @@ def replay(
     run_dir = create_run(plan.scenario_id, ROOT / "reports/runs")
     plan = plan.model_copy(
         update={
+            "schema_version": "2.1",
             "run_id": run_dir.name,
             "source": "candidate_replay" if candidate else "approved_replay",
             "cases": [case for case in plan.cases if case.case_id in chosen],

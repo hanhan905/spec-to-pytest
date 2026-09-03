@@ -18,6 +18,8 @@ gates. No production-readiness or coverage-improvement claim is made.
 - TRAE role instructions, a data-expansion Skill and version-pinned Playwright MCP configuration.
 - Checks across case mapping, setup/call/teardown events, JUnit and process exit codes.
 - Separate attempts, conservative repair guards and an explicit known-defect demonstration.
+- Policy 2.1 structured checks, recorded MCP sessions, idempotent requests and separate
+  execution/workflow gates. Semantic and host-delegation review remain explicit.
 
 This project focuses on the boundary between generated candidates and checked execution records.
 It uses Playwright, Pytest and Allure; it does not replace them or implement an LLM runtime.
@@ -71,6 +73,8 @@ The public-export helper emits only an aggregate allowlist.
 
 - [Architecture and directory ownership](docs/concepts/architecture.md)
 - [Troubleshooting](docs/how-to/troubleshooting.md)
+- [Structured checks and bounded repairs](docs/how-to/check-contracts.md)
+- [Workflow acceptance and maintainer review](docs/how-to/workflow-acceptance.md)
 - [Business rules](mana/business_rules.md)
 - [Historical sample provenance](examples/candidates/content_lifecycle/README.md)
 - [Contribution guide](CONTRIBUTING.md)

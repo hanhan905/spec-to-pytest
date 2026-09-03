@@ -14,19 +14,23 @@ import sys
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
-from filelock import FileLock
+from filelock import FileLock, Timeout
 
+from framework.ai.acceptance import assess
+from framework.ai.bindings import source_bindings
 from framework.ai.contracts import PlannedCase, TestPlan
 from framework.ai.integrity import (
     assertion_signatures,
-    check_assertions,
     digest,
     generated_hashes,
     protected_hashes,
     require_repair_budget,
     source_files,
 )
+from framework.ai.repair_guard import guard_snapshot, validate_repair
+from framework.ai.requests import fingerprint, finish, invocation_result, reserve, utc_now
 from framework.ai.runs import create_run, write_json
 from framework.runtime.service import OwnedApp, assert_serial, parse_local_url
 from scripts.finalise_ai_run import finalise
@@ -36,6 +40,113 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def execute(args: argparse.Namespace, pytest_args: list[str]) -> int:
+    run = args.run_dir.resolve() if args.run_dir else create_run("baseline", ROOT / "reports/runs")
+    if not run.is_relative_to(ROOT / "reports/runs") or run.is_symlink():
+        raise ValueError("Run must belong to this workspace")
+    metadata = json.loads((run / "run.json").read_text())
+    if metadata.get("schema_version") != "2.1" or metadata.get("acceptance_policy") != "2.1":
+        raise ValueError("Legacy runs are read-only; create a linked new run")
+    if metadata.get("run_id") != run.name:
+        raise ValueError("Run identity mismatch")
+    args.run_dir = run
+    requested = getattr(args, "request_id", None)
+    try:
+        claim = json.loads(args.plan.read_text()).get("source", "") if args.plan else ""
+    except (ValueError, AttributeError):
+        claim = ""
+    if claim.startswith("trae_") and not requested:
+        raise ValueError("AI execution requires a stable --request-id")
+    request_id = requested or uuid4().hex
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,127}", request_id):
+        raise ValueError("Invalid logical request identifier")
+    parent = getattr(args, "parent_request_ref", None)
+    reason = getattr(args, "request_reason", None)
+    if parent and not re.fullmatch(r"[A-Za-z0-9_-]+/[A-Za-z0-9_-]+", parent):
+        raise ValueError("Invalid parent request reference")
+    (ROOT / ".local").mkdir(exist_ok=True)
+    try:
+        with FileLock(ROOT / ".local/request-ledger.lock", timeout=0):
+            value = fingerprint(ROOT, run, args, pytest_args)
+            reservation = reserve(run, request_id, value, parent_ref=parent, reason=reason)
+            args.request_id, args.invocation_id = request_id, reservation.invocation_id
+            invocation = {
+                "schema_version": "2.1",
+                "request_id": request_id,
+                "invocation_id": reservation.invocation_id,
+                "started_at": utc_now(),
+                "pid": os.getpid(),
+                "parent_pid": os.getppid(),
+                "cached": reservation.cached_exit is not None,
+            }
+            write_json(
+                run / "invocations" / f"{reservation.invocation_id}.json",
+                invocation,
+                exclusive=True,
+            )
+            if reservation.cached_exit is not None:
+                code = reservation.cached_exit
+                if code != 2:
+                    try:
+                        cached = finalise(run, write_output=False)
+                        if cached.integrity_errors:
+                            code = 2
+                    except (ValueError, OSError, TypeError, KeyError):
+                        code = 2
+                cached_record = json.loads(reservation.path.read_text())
+                invocation_result(
+                    run,
+                    reservation,
+                    code=code,
+                    state="cached",
+                    attempt_id=cached_record.get("attempt_id"),
+                )
+                print(
+                    json.dumps(
+                        {
+                            "request_id": request_id,
+                            "cached": True,
+                            "exit_code": code,
+                            "attempt_id": cached_record.get("attempt_id"),
+                        }
+                    )
+                )
+                return code
+            try:
+                code = _execute_once(args, pytest_args)
+            except (ValueError, OSError, KeyError, TypeError, SyntaxError):
+                finish(reservation, "rejected", exit_code=2)
+                invocation_result(run, reservation, code=2, state="rejected")
+                raise
+            except BaseException:
+                finish(reservation, "interrupted", exit_code=2)
+                invocation_result(run, reservation, code=2, state="interrupted")
+                raise
+            attempts = json.loads((run / "run.json").read_text())["attempts"]
+            process = (
+                json.loads((run / "attempts" / attempts[-1] / "process.json").read_text())
+                if attempts
+                else {}
+            )
+            finish(
+                reservation,
+                "completed" if process.get("completed") else "interrupted",
+                exit_code=code,
+                attempt_id=attempts[-1] if attempts else None,
+            )
+            invocation_result(
+                run,
+                reservation,
+                code=code,
+                state="completed" if process.get("completed") else "interrupted",
+                attempt_id=attempts[-1] if attempts else None,
+            )
+            return code
+    except Timeout:
+        print(json.dumps({"request_id": request_id, "state": "in_progress_or_workbench_busy"}))
+        return 2
+
+
+def _execute_once(args: argparse.Namespace, pytest_args: list[str]) -> int:
     assert_serial(pytest_args)
     if any(argument.startswith("--app-url") for argument in pytest_args):
         raise ValueError(
@@ -66,6 +177,7 @@ def execute(args: argparse.Namespace, pytest_args: list[str]) -> int:
             if metadata["protected_hashes"] != protected_hashes(ROOT):
                 raise ValueError("Protected inputs changed since run preparation")
             metadata["assertions"] = assertion_signatures(ROOT, run_id) if is_generated else {}
+            metadata["repair_guard"] = guard_snapshot(ROOT, run_id) if is_generated else {}
             metadata["generated_hashes"] = generated_hashes(ROOT, run_id)
             metadata["source"] = "baseline"
             data = args.data or ROOT / "mana/test_data/content_base.csv"
@@ -74,6 +186,8 @@ def execute(args: argparse.Namespace, pytest_args: list[str]) -> int:
             metadata["data_hash"] = digest(run_dir / "data.csv")
             if args.plan:
                 plan = TestPlan.model_validate_json(args.plan.read_text())
+                if plan.schema_version != "2.1":
+                    raise ValueError("New execution requires a 2.1 plan")
                 if plan.run_id != run_id or plan.scenario_id != metadata["scenario_id"]:
                     raise ValueError("Plan and prepared run identifiers differ")
                 with (run_dir / "data.csv").open(newline="", encoding="utf-8") as stream:
@@ -98,6 +212,8 @@ def execute(args: argparse.Namespace, pytest_args: list[str]) -> int:
                 )
                 metadata["source"] = plan.source
                 metadata["plan_hash"] = digest(run_dir / "plan.json")
+                write_json(run_dir / "check-bindings.json", source_bindings(ROOT, run_id, plan))
+                metadata["bindings_hash"] = digest(run_dir / "check-bindings.json")
         else:
             if metadata["protected_hashes"] != protected_hashes(ROOT):
                 raise ValueError("Protected project files changed; create a new run")
@@ -106,10 +222,53 @@ def execute(args: argparse.Namespace, pytest_args: list[str]) -> int:
             ] != digest(run_dir / "data.csv"):
                 raise ValueError("Frozen inputs changed; create a new run")
             if is_generated:
-                current = assertion_signatures(ROOT, run_id)
-                check_assertions(metadata["assertions"], current)
                 hashes = generated_hashes(ROOT, run_id)
                 if hashes != metadata["generated_hashes"]:
+                    try:
+                        current_guard = guard_snapshot(ROOT, run_id)
+                        validate_repair(
+                            metadata["repair_guard"],
+                            current_guard,
+                            args.repair_kind,
+                            len(metadata["repairs"]),
+                        )
+                    except (ValueError, SyntaxError) as error:
+                        proposal = run_dir / "repair-proposals" / uuid4().hex
+                        previous = run_dir / "attempts" / metadata["attempts"][-1] / "source"
+                        patches = []
+                        for name in sorted(set(hashes) | set(metadata["generated_hashes"])):
+                            old, new = previous / name, ROOT / name
+                            patches.extend(
+                                difflib.unified_diff(
+                                    old.read_text().splitlines(True) if old.exists() else [],
+                                    new.read_text().splitlines(True) if new.exists() else [],
+                                    fromfile=name,
+                                    tofile=name,
+                                )
+                            )
+                        write_json(
+                            proposal / "decision.json",
+                            {
+                                "accepted": False,
+                                "reason": str(error),
+                                "kind": args.repair_kind,
+                                "request_id": args.request_id,
+                                "recorded_at": utc_now(),
+                                "before": metadata["generated_hashes"],
+                                "after": hashes,
+                            },
+                            exclusive=True,
+                        )
+                        (proposal / "change.patch").write_text("".join(patches))
+                        raise ValueError(
+                            "Repair rejected; proposal retained; create a new run"
+                        ) from error
+                    if not getattr(args, "parent_request_ref", None) or not getattr(
+                        args, "request_reason", None
+                    ):
+                        raise ValueError(
+                            "Repair request must link to its prior execution and reason"
+                        )
                     require_repair_budget(
                         len(metadata["repairs"]), args.repair_kind, args.repair_note
                     )
@@ -155,6 +314,8 @@ def execute(args: argparse.Namespace, pytest_args: list[str]) -> int:
                     write_json(repair_path / "repair.json", repair, exclusive=True)
                     (repair_path / "change.patch").write_text("".join(patch))
                     metadata["repairs"].append(repair)
+                    metadata["repair_guard"] = current_guard
+                current = assertion_signatures(ROOT, run_id)
                 metadata["assertions"], metadata["generated_hashes"] = current, hashes
         attempt_id = f"{len(metadata['attempts']) + 1:04d}"
         attempt = run_dir / "attempts" / attempt_id
@@ -195,6 +356,8 @@ def execute(args: argparse.Namespace, pytest_args: list[str]) -> int:
         if is_generated:
             command.append("--require-case-ids")
         process: dict[str, Any] = {
+            "request_id": args.request_id,
+            "invocation_id": args.invocation_id,
             "completed": False,
             "full_suite": True,
             "exit_code": None,
@@ -213,6 +376,8 @@ def execute(args: argparse.Namespace, pytest_args: list[str]) -> int:
                     "AUTO_INSTANCE_ID": service.instance_id,
                     "AUTO_CONTROL_TOKEN": service.control_token,
                     "AUTO_RUN_DIR": str(run_dir),
+                    "AUTO_REQUEST_ID": args.request_id,
+                    "AUTO_INVOCATION_ID": args.invocation_id,
                 }
                 with (attempt / "pytest.log").open("xb") as log:
                     result = subprocess.run(
@@ -241,6 +406,7 @@ def execute(args: argparse.Namespace, pytest_args: list[str]) -> int:
                 print(json.dumps({"run_dir": str(run_dir), "quality_gate": "blocked"}))
                 return 2
             plan = TestPlan(
+                schema_version="2.1",
                 run_id=run_id,
                 scenario_id=metadata["scenario_id"],
                 source="baseline",
@@ -268,11 +434,13 @@ def execute(args: argparse.Namespace, pytest_args: list[str]) -> int:
         }
         write_json(attempt / "receipt.json", receipt, exclusive=True)
         manifest = finalise(run_dir)
+        assessment = assess(run_dir, manifest)
         print(
             json.dumps(
                 {
                     "run_dir": str(run_dir),
                     "quality_gate": manifest.quality_gate,
+                    "workflow_gate": assessment.workflow_gate,
                     "counts": manifest.counts,
                 }
             )
@@ -290,12 +458,15 @@ def main() -> int:
     )
     parser.add_argument("--bug-mode", choices=["healthy", "comment_counter"], default="healthy")
     parser.add_argument("--timeout", type=float, default=180)
-    parser.add_argument("--repair-kind", choices=["locator", "synchronisation", "data", "syntax"])
+    parser.add_argument("--repair-kind", choices=["locator", "synchronisation"])
     parser.add_argument("--repair-note")
+    parser.add_argument("--request-id")
+    parser.add_argument("--parent-request-ref")
+    parser.add_argument("--request-reason")
     args, remaining = parser.parse_known_args()
     try:
         return execute(args, remaining)
-    except (ValueError, OSError, KeyError, TypeError) as error:
+    except (ValueError, OSError, KeyError, TypeError, SyntaxError, RuntimeError) as error:
         print(f"Execution blocked: {type(error).__name__}", file=sys.stderr)
         return 2
 

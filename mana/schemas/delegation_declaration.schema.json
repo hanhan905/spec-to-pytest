@@ -1,0 +1,109 @@
+{
+  "$defs": {
+    "DeclaredPhase": {
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "enum": [
+            "playwright-test-generator",
+            "ai-test-data-expander"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "phase": {
+          "enum": [
+            "plan",
+            "data",
+            "generate-and-execute"
+          ],
+          "title": "Phase",
+          "type": "string"
+        },
+        "correlation_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
+          "title": "Correlation Id",
+          "type": "string"
+        },
+        "host_role_identifier": {
+          "minLength": 1,
+          "title": "Host Role Identifier",
+          "type": "string"
+        },
+        "host_call_id": {
+          "default": "not_exposed_by_host",
+          "title": "Host Call Id",
+          "type": "string"
+        },
+        "parent_call_id": {
+          "default": "not_exposed_by_host",
+          "title": "Parent Call Id",
+          "type": "string"
+        },
+        "input_artifacts": {
+          "additionalProperties": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "minProperties": 1,
+          "title": "Input Artifacts",
+          "type": "object"
+        },
+        "output_artifacts": {
+          "additionalProperties": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "minProperties": 1,
+          "title": "Output Artifacts",
+          "type": "object"
+        }
+      },
+      "required": [
+        "role",
+        "phase",
+        "correlation_id",
+        "host_role_identifier",
+        "input_artifacts",
+        "output_artifacts"
+      ],
+      "title": "DeclaredPhase",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "2.1",
+      "default": "2.1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "run_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
+      "title": "Run Id",
+      "type": "string"
+    },
+    "evidence_kind": {
+      "const": "agent_statement",
+      "default": "agent_statement",
+      "title": "Evidence Kind",
+      "type": "string"
+    },
+    "calls": {
+      "items": {
+        "$ref": "#/$defs/DeclaredPhase"
+      },
+      "maxItems": 3,
+      "minItems": 3,
+      "title": "Calls",
+      "type": "array"
+    }
+  },
+  "required": [
+    "run_id",
+    "calls"
+  ],
+  "title": "DelegationDeclaration",
+  "type": "object"
+}

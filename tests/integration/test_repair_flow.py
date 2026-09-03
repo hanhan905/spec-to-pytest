@@ -6,6 +6,8 @@ import socket
 from datetime import UTC, datetime
 from pathlib import Path
 
+import pytest
+
 from framework.ai.contracts import PlannedCase
 from framework.ai.contracts import TestPlan as PlanContract
 from framework.ai.integrity import digest
@@ -29,12 +31,13 @@ def test_locator_repair_keeps_original_failure_and_rejects_tampered_evidence() -
 from playwright.sync_api import Page, expect
 
 from framework.config.settings import Settings
+from framework.ai import actions
 
 
 @pytest.mark.case_id("REPAIR_001")
 def test_login(configured_page: Page, settings: Settings) -> None:
     configured_page.goto(f"{settings.base_url}/login")
-    configured_page.get_by_label("用户名（错误定位）").fill("admin", timeout=300)
+    actions.fill(configured_page, "USERNAME", "admin", label="用户名（错误定位）", timeout=300)
     configured_page.get_by_label("密码").fill("admin123")
     configured_page.get_by_role("button", name="登录").click()
     expect(configured_page).to_have_url(f"{settings.base_url}/dashboard")
@@ -44,6 +47,7 @@ def test_login(configured_page: Page, settings: Settings) -> None:
         encoding="utf-8",
     )
     plan = PlanContract(
+        schema_version="2.1",
         run_id=run.name,
         scenario_id="synthetic-repair",
         source="synthetic",
@@ -70,6 +74,9 @@ def test_login(configured_page: Page, settings: Settings) -> None:
         timeout=60,
         repair_kind=None,
         repair_note=None,
+        request_id="initial",
+        parent_request_ref=None,
+        request_reason=None,
     )
     selection = [target.relative_to(ROOT).as_posix(), "--browser", "chromium", "-q"]
     assert execute(args, selection) == 1
@@ -80,6 +87,9 @@ def test_login(configured_page: Page, settings: Settings) -> None:
 
     test.write_text(test.read_text().replace("用户名（错误定位）", "用户名"))
     args.repair_kind, args.repair_note = "locator", "Correct accessible label in synthetic fixture"
+    args.request_id = "repair-one"
+    args.parent_request_ref = f"{run.name}/initial"
+    args.request_reason = "Registered locator repair"
     assert execute(args, selection) == 0
     assert digest(original) == original_hash
     repaired = finalise(run)
@@ -96,6 +106,22 @@ def test_login(configured_page: Page, settings: Settings) -> None:
     finally:
         original.write_bytes(original_content)
     assert finalise(run).quality_gate == "passed"
+    original_generated = test.read_bytes()
+    try:
+        test.write_text(test.read_text() + "\nclass Wrapper:\n    status_code = 200\n")
+        args.request_id = "rejected-wrapper"
+        args.parent_request_ref = f"{run.name}/repair-one"
+        args.request_reason = "Synthetic guard rejection fixture"
+        with pytest.raises(ValueError, match="Repair rejected"):
+            execute(args, selection)
+        proposal = next((run / "repair-proposals").glob("*/decision.json"))
+        decision = json.loads(proposal.read_text())
+        assert decision["accepted"] is False
+        assert decision["before"] != decision["after"]
+        assert "class Wrapper" in (proposal.parent / "change.patch").read_text()
+        assert json.loads((run / "run.json").read_text())["attempts"] == ["0001", "0002"]
+    finally:
+        test.write_bytes(original_generated)
     write_json(
         run / "regression-check.json",
         {
@@ -104,5 +130,6 @@ def test_login(configured_page: Page, settings: Settings) -> None:
             "tamper_detected": True,
             "evidence_restored_to_original_hash": digest(original) == original_hash,
             "fresh_ai_generation": False,
+            "rejected_wrapper_patch_retained": True,
         },
     )

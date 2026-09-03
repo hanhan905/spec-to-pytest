@@ -94,10 +94,18 @@ def assertion_signatures(root: Path, run_id: str) -> dict[str, list[str] | None]
                 and any(alias.name in {"skip", "xfail"} for alias in node.names)
             ):
                 raise ValueError("Generated tests cannot import skip or xfail")
-            if isinstance(node, ast.Assert) or (
-                isinstance(node, ast.Call)
-                and isinstance(node.func, ast.Attribute)
-                and node.func.attr.startswith(("to_", "not_to_"))
+            if (
+                isinstance(node, ast.Assert)
+                or (
+                    isinstance(node, ast.Call)
+                    and isinstance(node.func, ast.Attribute)
+                    and node.func.attr.startswith(("to_", "not_to_"))
+                )
+                or (
+                    isinstance(node, ast.Call)
+                    and isinstance(node.func, ast.Name)
+                    and node.func.id == "verify"
+                )
             ):
                 assertions.append(ast.dump(node, include_attributes=False))
         result[name] = sorted(assertions)

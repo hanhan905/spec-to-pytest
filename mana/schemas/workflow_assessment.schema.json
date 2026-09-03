@@ -1,0 +1,99 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "2.1",
+      "default": "2.1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "acceptance_policy": {
+      "const": "2.1",
+      "default": "2.1",
+      "title": "Acceptance Policy",
+      "type": "string"
+    },
+    "assessment_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
+      "title": "Assessment Id",
+      "type": "string"
+    },
+    "run_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
+      "title": "Run Id",
+      "type": "string"
+    },
+    "final_attempt": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
+      "title": "Final Attempt",
+      "type": "string"
+    },
+    "assessed_at": {
+      "format": "date-time",
+      "title": "Assessed At",
+      "type": "string"
+    },
+    "execution_gate": {
+      "enum": [
+        "passed",
+        "failed",
+        "blocked"
+      ],
+      "title": "Execution Gate",
+      "type": "string"
+    },
+    "workflow_gate": {
+      "enum": [
+        "verified",
+        "unverified",
+        "rejected",
+        "not_applicable"
+      ],
+      "title": "Workflow Gate",
+      "type": "string"
+    },
+    "reasons": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Reasons",
+      "type": "array"
+    },
+    "evidence_basis": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Evidence Basis",
+      "type": "object"
+    },
+    "reviewed_artifacts": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Reviewed Artifacts",
+      "type": "object"
+    },
+    "review_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Review Id"
+    }
+  },
+  "required": [
+    "assessment_id",
+    "run_id",
+    "final_attempt",
+    "assessed_at",
+    "execution_gate",
+    "workflow_gate"
+  ],
+  "title": "WorkflowAssessment",
+  "type": "object"
+}

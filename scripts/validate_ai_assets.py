@@ -11,12 +11,21 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from framework.ai.contracts import DataRow, RunManifest, StepInfoStore, TestPlan
+from framework.ai.acceptance import WorkflowAssessment
+from framework.ai.contracts import (
+    DataRow,
+    DelegationDeclaration,
+    RunManifest,
+    StepInfoStore,
+    TestPlan,
+)
 
 CONTRACTS: dict[str, type[BaseModel]] = {
     "plan": TestPlan,
     "steps": StepInfoStore,
     "manifest": RunManifest,
+    "assessment": WorkflowAssessment,
+    "delegation": DelegationDeclaration,
 }
 CSV_FIELDS = ["data_id", "title", "content", "tags", "comment", "expected_valid"]
 

@@ -2,8 +2,8 @@
 
 Date: 2026-09-04
 
-Status: design direction and legacy-run policy approved; written specification awaits
-maintainer review. This document is not an implementation or acceptance claim.
+Status: written specification approved by the maintainer on 2026-09-04.
+This document is not an implementation or acceptance claim.
 
 ## 1. Purpose and observed failure modes
 
@@ -380,7 +380,7 @@ GitHub-hosted CI, license/source approval and publication remain separate releas
 - [x] Compare prompt-only, layered-gate and full-language approaches.
 - [x] Obtain approval for the layered-gate design and restricted automatic repairs.
 - [x] Write the concrete specification and self-review scope, consistency and ambiguity.
-- [ ] Obtain maintainer review of this written specification.
+- [x] Obtain maintainer review of this written specification.
 - [ ] Produce the implementation plan, then implement and validate within the approved scope.
 
 Only local commits are authorized. No remote repository, push or public example

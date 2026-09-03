@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import platform
 import re
+import secrets
 from datetime import UTC, datetime
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
@@ -22,7 +23,21 @@ def write_json(path: Path, payload: Any, *, exclusive: bool = False) -> None:
         stream.write("\n")
 
 
-def create_run(scenario_id: str, reports_root: Path) -> Path:
+def create_run(
+    scenario_id: str,
+    reports_root: Path,
+    *,
+    exploration_origin: str = "http://127.0.0.1:8000",
+    parent_run_id: str | None = None,
+) -> Path:
+    from framework.runtime.service import parse_local_url
+
+    exploration_origin, _ = parse_local_url(exploration_origin)
+    if parent_run_id is not None:
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,127}", parent_run_id):
+            raise ValueError("Invalid parent run identifier")
+        if not (reports_root / parent_run_id / "run.json").is_file():
+            raise ValueError("Parent run does not exist")
     scenario = re.sub(r"[^A-Za-z0-9_-]", "-", scenario_id).strip("-")[:60] or "scenario"
     run_id = f"{datetime.now(UTC):%Y%m%dT%H%M%SZ}-{scenario}-{uuid4().hex[:8]}"
     run_dir = reports_root / run_id
@@ -45,11 +60,16 @@ def create_run(scenario_id: str, reports_root: Path) -> Path:
     write_json(
         run_dir / "run.json",
         {
+            "schema_version": "2.1",
+            "acceptance_policy": "2.1",
             "run_id": run_id,
             "scenario_id": scenario,
+            "parent_run_id": parent_run_id,
             "created_at": datetime.now(UTC).isoformat(),
             "attempts": [],
             "repairs": [],
+            "correlation_nonce": secrets.token_hex(32),
+            "exploration_origin": exploration_origin,
             "protected_hashes": protected_hashes(project),
             "application_fingerprint": application_fingerprint(project),
             "environment": {
@@ -65,12 +85,18 @@ def create_run(scenario_id: str, reports_root: Path) -> Path:
 
 
 def write_summary(run_dir: Path, manifest: RunManifest) -> None:
+    from framework.ai.acceptance import assess, save_assessment
+
+    assessment = assess(run_dir, manifest)
+    assessment_path = save_assessment(run_dir, assessment)
     write_json(run_dir / "manifest.json", manifest.model_dump(mode="json"))
     lines = [
         f"# Run {manifest.run_id}",
         "",
-        f"Quality gate: **{manifest.quality_gate}**",
-        f"Workflow source: `{manifest.source}`",
+        f"Execution gate: **{manifest.quality_gate}**",
+        f"AI workflow gate: **{assessment.workflow_gate}**",
+        f"Assessment: `{assessment_path.relative_to(run_dir).as_posix()}`",
+        f"Declared workflow source: `{manifest.source}`",
         "",
         "Counts refer to unique planned cases, not attempts.",
         "",
@@ -89,6 +115,10 @@ def write_summary(run_dir: Path, manifest: RunManifest) -> None:
             *(manifest.integrity_errors or ["Checks passed."]),
             "",
             "Raw browser evidence is local-only and must be reviewed before sharing.",
+            "",
+            "## Workflow acceptance",
+            "",
+            *(assessment.reasons or ["Evidence and maintainer review verified."]),
         ]
     )
     (run_dir / "summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")

@@ -25,6 +25,13 @@ Linux and hosted CI remain targets until their jobs run. Python 3.12.14 was addi
 macOS in a clean clone. Windows, Firefox and WebKit are not verified. Python Playwright and the MCP
 server are distinct components; their versions can differ.
 
+Policy 2.1 recorder observation (2026-09-04): the actual installed package remained
+0.0.80, the server reported `1.63.0-alpha-2026-08-31`, and the adapter exposed 27 tools
+(24 underlying tools plus 3 evidence-management tools). A fresh local navigate,
+snapshot, username entry, follow-up snapshot and sealed close passed. The pinned
+`browser_type` schema requires `target`; an initial probe using `ref` failed and was
+retained. This is a standalone recorded probe, **not** new TRAE-host acceptance.
+
 Sources: [Playwright MCP](https://github.com/microsoft/playwright-mcp),
 [TRAE Agent](https://docs.trae.cn/ide_built-in-agent),
 [TRAE Skills](https://docs.trae.cn/ide_skills), [Gitleaks](https://github.com/gitleaks/gitleaks).

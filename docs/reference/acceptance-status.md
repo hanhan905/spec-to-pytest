@@ -1,8 +1,8 @@
 # Local acceptance checkpoint — 2026-09-03
 
 The local engineering build is implemented and verified. **The complete v0.1 public release is
-not approved yet.** A live TRAE-host run, maintainer promotion of the historical candidate, security
-policy approval, license choice and actual hosted CI remain outstanding.
+not approved yet.** A fully evidenced TRAE-host run, maintainer promotion of a candidate,
+license choice and actual hosted CI remain outstanding. SECURITY.md was approved and committed.
 
 ## Verified locally
 
@@ -52,8 +52,8 @@ CSV fixtures deliberately retain their recorded bytes. Git attributes preserve t
 recognize CRLF endings without stripping meaningful whitespace in boundary-test cells. All 17
 candidate bundle hashes were checked against committed Git contents and the fresh replay passed.
 
-This is not a completed repository-wide vulnerability audit. The root SECURITY.md proposal has
-not been applied while awaiting owner review; license/source distribution decisions are separate gates.
+This is not a completed repository-wide vulnerability audit. The root SECURITY.md was approved
+and applied; license/source distribution decisions remain separate gates.
 
 ## Failures observed and addressed during implementation
 
@@ -74,9 +74,25 @@ not been applied while awaiting owner review; license/source distribution decisi
 1. Run a new scenario in the actual TRAE host and inspect real role calls, generated assets and
    host/model provenance. A standalone MCP probe and historical replay cannot substitute for this.
 2. Maintainer review of `examples/candidates/content_lifecycle/`; do not call it approved before that.
-3. Approve the exact SECURITY.md proposal and choose a license after source/asset review.
+3. Choose a license after source/asset review and establish a private vulnerability reporting route.
 4. Separately authorize remote repository creation/push, then run Linux/hosted CI before release.
 5. Repeat publication-package/history checks after any changes. No social post has been sent.
 
 See [tool versions](tool-versions.md), [visual QA](visual-qa.md), and
 [implementation plan](../superpowers/plans/2026-09-03-v0.1-implementation.md).
+
+## First TRAE session review and policy 2.1
+
+The supplied first session produced 15 tests and 25 data rows. Its six full attempts
+converged from 11 to 13 to 15 passing cases; independent receipt/JUnit reconciliation
+confirmed the final mechanical result. It was **not accepted as a public AI example**:
+project-MCP identity was not tied to the actual calls, one error-detail check was weaker
+than its plan, an object wrapper preserved assertion syntax while changing the request
+implementation, and duplicate-run attribution lacked caller evidence.
+
+The historical run and generated sources remain unchanged. The approved
+[2.1 hardening design](../superpowers/specs/2026-09-04-ai-acceptance-hardening-design.md)
+adds separate gates, a real MCP recorder, frozen comparisons, narrow action repairs
+and idempotent request records. A standalone recorded MCP probe is not a replacement
+for a fresh TRAE-host acceptance run. Local implementation verification is recorded
+in the [new implementation plan](../superpowers/plans/2026-09-04-ai-acceptance-hardening.md).

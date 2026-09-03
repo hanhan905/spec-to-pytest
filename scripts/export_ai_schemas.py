@@ -8,7 +8,8 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from framework.ai.contracts import RunManifest, StepInfoStore, TestPlan
+from framework.ai.acceptance import WorkflowAssessment
+from framework.ai.contracts import DelegationDeclaration, RunManifest, StepInfoStore, TestPlan
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_DIR = ROOT / "mana" / "schemas"
@@ -23,6 +24,8 @@ def main() -> None:
         "test_plan.schema.json": TestPlan,
         "step_info.schema.json": StepInfoStore,
         "run_manifest.schema.json": RunManifest,
+        "workflow_assessment.schema.json": WorkflowAssessment,
+        "delegation_declaration.schema.json": DelegationDeclaration,
     }
     for filename, contract in contracts.items():
         output = SCHEMA_DIR / filename

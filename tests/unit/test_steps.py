@@ -116,6 +116,8 @@ def test_public_export_never_includes_raw_reasons_paths_or_run_identifiers() -> 
         "planned_count",
         "counts",
         "integrity_error_count",
+        "workflow_gate",
+        "acceptance_policy",
     }
     assert "synthetic private detail" not in str(exported)
     assert "private-trace.zip" not in str(exported)

@@ -67,6 +67,14 @@ def reconcile(
         errors.append("incomplete_session_events")
     elif events[0].get("kind") != "session_start" or events[-1].get("kind") != "session_finish":
         errors.append("event_sequence_invalid")
+    if plan.schema_version == "2.1" and (
+        not process.get("request_id")
+        or not process.get("invocation_id")
+        or len(starts) != 1
+        or starts[0].get("request_id") != process.get("request_id")
+        or starts[0].get("invocation_id") != process.get("invocation_id")
+    ):
+        errors.append("request_invocation_identity_mismatch")
     if (
         type(process.get("exit_code")) is not int
         or process.get("exit_code") not in (0, 1)
@@ -269,6 +277,7 @@ def reconcile(
         else "passed"
     )
     return RunManifest(
+        schema_version=plan.schema_version,
         run_id=plan.run_id,
         scenario_id=plan.scenario_id,
         source=plan.source,

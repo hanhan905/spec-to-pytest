@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, cast
 
 import pytest
+
+from framework.ai.event_context import TestContext, current
 
 
 @dataclass
@@ -23,6 +26,44 @@ class ExecutionState:
 
 
 KEY = pytest.StashKey[ExecutionState]()
+
+
+def phase_context(item: pytest.Item, phase: str) -> Any:
+    state = item.config.stash.get(KEY, None)
+    run = os.environ.get("AUTO_RUN_DIR")
+    value = (
+        TestContext(Path(run), state.cases[item.nodeid], item.nodeid, phase, state.emit)
+        if state and run and item.nodeid in state.cases
+        else None
+    )
+    return current.set(value)
+
+
+@pytest.hookimpl(hookwrapper=True, tryfirst=True)
+def pytest_runtest_setup(item: pytest.Item) -> Any:
+    token = phase_context(item, "setup")
+    try:
+        yield
+    finally:
+        current.reset(token)
+
+
+@pytest.hookimpl(hookwrapper=True, tryfirst=True)
+def pytest_runtest_call(item: pytest.Item) -> Any:
+    token = phase_context(item, "call")
+    try:
+        yield
+    finally:
+        current.reset(token)
+
+
+@pytest.hookimpl(hookwrapper=True, tryfirst=True)
+def pytest_runtest_teardown(item: pytest.Item) -> Any:
+    token = phase_context(item, "teardown")
+    try:
+        yield
+    finally:
+        current.reset(token)
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -39,7 +80,13 @@ def pytest_sessionstart(session: pytest.Session) -> None:
         (root / "events.jsonl").touch(exist_ok=False)
         state = ExecutionState(root)
         session.config.stash[KEY] = state
-        state.emit({"kind": "session_start"})
+        state.emit(
+            {
+                "kind": "session_start",
+                "request_id": os.environ.get("AUTO_REQUEST_ID"),
+                "invocation_id": os.environ.get("AUTO_INVOCATION_ID"),
+            }
+        )
 
 
 def pytest_configure(config: pytest.Config) -> None:

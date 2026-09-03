@@ -5,12 +5,24 @@ replay do not establish that host orchestration passed.
 
 ## Prepare the project
 
-Run `make setup` and `make baseline` first. The optional AI path needs Node.js/npx and your TRAE
+Run `make setup` and `make baseline` first. The optional AI path needs Node.js and your TRAE
 account. The Python project itself does not request an LLM API key.
 
-Run `uv run --frozen python -m scripts.configure_trae`. It creates ignored `.trae/mcp.json`, with
-machine-specific executable/output paths and MCP 0.0.80. Existing config is never overwritten.
-Enable project-level MCP in TRAE and confirm the Playwright tools appear. Use `.trae`, not `.trea`.
+For policy 2.1, install the locked optional runtime and generate a recorder proposal:
+
+```sh
+npm ci --prefix integrations/trae --ignore-scripts
+uv run --frozen python -m scripts.configure_trae --recorded
+```
+
+Review `.trae/mcp.recorded.proposed.json` and merge its `playwright` entry into project MCP settings,
+preserving unrelated servers. The helper never overwrites `.trae/mcp.json`. Reload the server and
+confirm `evidence_begin_run`, `evidence_end_run` and `evidence_status` appear alongside browser tools.
+Use `.trae`, not `.trea`. The legacy direct-server template supports unrecorded exploration only;
+neither that config nor host-native `browser_*` names prove the new project-MCP claim.
+
+The adapter records installed package and server-reported versions separately. Read actual tool
+schemas: pinned MCP 0.0.80 uses `target` for `browser_type`, not the old `ref` parameter.
 
 Enable `.agents/skills` in Skills and Commands settings. A same-named skill under `.trae/skills`
 takes priority; resolve ambiguity first. See [official settings](https://docs.trae.cn/ide_skills).
@@ -55,9 +67,15 @@ Ask the built-in Agent to read the coordinator instruction and execute
 then request exploration/generation and execution. Inspect artifacts, not just the natural-language reply.
 
 The generator uses `scripts.run_local` with the actual run directory, candidate plan, candidate CSV
-and `--base-url http://127.0.0.1:8765`. All paths must come from this run, never an older frozen batch.
+and `--base-url http://127.0.0.1:8765 --request-id <logical_request_id>`.
+All paths must come from this run, never an older frozen batch.
 Save exact MCP snapshots/tool outputs into the run's exploration directory; `reports/mcp` is scratch
 output, not evidence automatically associated with every run. Never invent a tool transcript.
+
+Use schema 2.1 [structured checks](check-contracts.md). Bind the recorder with `evidence_begin_run`,
+using this run's ID and `correlation_nonce` from `run.json`. Retain navigate → snapshot → action →
+snapshot through the recorder, then call `evidence_end_run`. It closes the isolated browser and
+seals the segment under `exploration/mcp/`; incomplete segments cannot verify MCP use.
 
 Host permissions, login or usage limits may interrupt execution. Record interventions rather than
 claiming an unattended run. If delegation is unavailable, use the generator plus the data Skill and
@@ -67,3 +85,10 @@ Every planned case must appear in `manifest.json`. Review failures, repair diffs
 JUnit, screenshots and traces. `make report` creates an optional local Allure view. Do not upload raw
 browser artifacts. Record visible TRAE/model/MCP versions and use `not_exposed_by_host` for hidden
 versions. Standard orchestration, fallback and historical replay are separate verification claims.
+
+Report execution and workflow gates separately. Missing host captures or maintainer semantic review
+leaves workflow `unverified`, even with all tests green. Do not ask the generator to self-approve.
+See [workflow acceptance and request retries](workflow-acceptance.md).
+
+Optional: `uv run --frozen python -m scripts.probe_mcp` runs the real pinned MCP through the recorder
+against an owned local app. This is a standalone diagnostic, not TRAE delegation acceptance.

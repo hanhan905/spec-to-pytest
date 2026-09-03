@@ -1,5 +1,64 @@
 {
   "$defs": {
+    "DataReference": {
+      "additionalProperties": false,
+      "properties": {
+        "data_id": {
+          "pattern": "^[A-Z0-9][A-Z0-9_-]{0,95}$",
+          "title": "Data Id",
+          "type": "string"
+        },
+        "field": {
+          "enum": [
+            "title",
+            "content",
+            "tags",
+            "comment",
+            "expected_valid"
+          ],
+          "title": "Field",
+          "type": "string"
+        }
+      },
+      "required": [
+        "data_id",
+        "field"
+      ],
+      "title": "DataReference",
+      "type": "object"
+    },
+    "ExpectedResult": {
+      "additionalProperties": false,
+      "properties": {
+        "expectation_id": {
+          "pattern": "^[A-Z0-9][A-Z0-9_-]{0,95}$",
+          "title": "Expectation Id",
+          "type": "string"
+        },
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "check_ids": {
+          "items": {
+            "pattern": "^[A-Z0-9][A-Z0-9_-]{0,95}$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Check Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "expectation_id",
+        "text",
+        "check_ids"
+      ],
+      "title": "ExpectedResult",
+      "type": "object"
+    },
+    "JsonValue": {},
     "PlannedCase": {
       "additionalProperties": false,
       "properties": {
@@ -99,6 +158,20 @@
           "default": true,
           "title": "Required",
           "type": "boolean"
+        },
+        "expectations": {
+          "items": {
+            "$ref": "#/$defs/ExpectedResult"
+          },
+          "title": "Expectations",
+          "type": "array"
+        },
+        "checks": {
+          "items": {
+            "$ref": "#/$defs/PlannedCheck"
+          },
+          "title": "Checks",
+          "type": "array"
         }
       },
       "required": [
@@ -110,13 +183,75 @@
       ],
       "title": "PlannedCase",
       "type": "object"
+    },
+    "PlannedCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "check_id": {
+          "pattern": "^[A-Z0-9][A-Z0-9_-]{0,95}$",
+          "title": "Check Id",
+          "type": "string"
+        },
+        "subject": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Subject",
+          "type": "string"
+        },
+        "operator": {
+          "enum": [
+            "equals",
+            "contains",
+            "ordered_equals",
+            "count",
+            "visible",
+            "url_equals",
+            "attribute_equals",
+            "property_equals"
+          ],
+          "title": "Operator",
+          "type": "string"
+        },
+        "expected": {
+          "$ref": "#/$defs/JsonValue",
+          "default": null
+        },
+        "expected_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DataReference"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "rule_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Rule Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "check_id",
+        "subject",
+        "operator"
+      ],
+      "title": "PlannedCheck",
+      "type": "object"
     }
   },
   "additionalProperties": false,
   "properties": {
     "schema_version": {
-      "const": "2.0",
       "default": "2.0",
+      "enum": [
+        "2.0",
+        "2.1"
+      ],
       "title": "Schema Version",
       "type": "string"
     },

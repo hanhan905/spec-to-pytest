@@ -1,6 +1,7 @@
 .venv/
 .uv-cache*/
 .npm-cache*/
+node_modules/
 __pycache__/
 *.py[cod]
 .pytest_cache/
@@ -12,6 +13,7 @@ htmlcov/
 .env.*
 !.env.example
 .trae/mcp.json
+.trae/mcp.recorded.proposed.json
 playwright/.auth/
 browser-data/
 tests/generated/

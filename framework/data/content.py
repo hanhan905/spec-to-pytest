@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 
 from framework.ai.contracts import DataRow
+from framework.ai.event_context import current
 from framework.ai.paths import contained_path
 from framework.data.models import CommunityPostData
 
@@ -23,6 +24,9 @@ def load_row(data_id: str) -> dict[str, str]:
     if len(matches) != 1:
         raise ValueError("Data reference must identify exactly one row")
     row = matches[0]
+    context = current.get()
+    if context is not None:
+        context.record("data_read", data_id=data_id)
     return {
         "data_id": row.data_id,
         "title": row.title,
