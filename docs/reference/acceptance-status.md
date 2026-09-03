@@ -9,6 +9,7 @@ policy approval, license choice and actual hosted CI remain outstanding.
 | Check | Observed result |
 |---|---|
 | Frozen environment | Installed in the independent project; imports resolve there, not the old project |
+| Fresh Git checkout | Commit 23ce4cf, new Python 3.12.14 environment: checks, 92 units/contracts, 14 baseline and 13 replay tests passed |
 | Ruff, formatting and mypy | Passed |
 | Unit and contract suite | 92 passed |
 | API/UI baseline | 14 passed in normal order and reverse order |
@@ -38,12 +39,18 @@ content were separately reviewed and are included in `docs/assets/`.
 
 Gitleaks 8.30.1 was downloaded from its official release and checked against SHA-256. Candidate
 source scans and scans of the new local Git history returned no findings at the checked checkpoints.
+The history scan was repeated after the 23ce4cf implementation commit: zero findings. A supplementary
+check of 149 candidate text files found no personal absolute-path or common personal-email patterns.
 Repeat the history scan after final publication staging. No finding is not proof that every possible
 secret has been ruled out; raw browser artifacts remain private and are not exported by default.
 
 The two published-candidate screenshots contain only synthetic content/demo account labels and no
 EXIF. No old Git history, private environment/configuration, database or raw run archive was copied
 into the public candidate. The original local projects and generated assets remain untouched.
+
+CSV fixtures deliberately retain their recorded bytes. Git attributes preserve those bytes and
+recognize CRLF endings without stripping meaningful whitespace in boundary-test cells. All 17
+candidate bundle hashes were checked against committed Git contents and the fresh replay passed.
 
 This is not a completed repository-wide vulnerability audit. The root SECURITY.md proposal has
 not been applied while awaiting owner review; license/source distribution decisions are separate gates.

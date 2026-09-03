@@ -5,6 +5,7 @@ Local observation, 2026-09-03, macOS arm64:
 | Component | Observed version | Verification |
 |---|---|---|
 | Python | 3.14.7 | Frozen environment and local tests |
+| Python, clean clone | 3.12.14 | New environment: quality, 92 units/contracts, 14 baseline, 13 replay checks passed |
 | Python Playwright | 1.62.0 | Real Chromium baseline |
 | Pytest | 9.1.1 | Unit tests and recorded subprocesses |
 | FastAPI / Starlette | 0.141.1 / 0.52.1 | App and TestClient checks |
@@ -20,8 +21,9 @@ The MCP probe exposed 24 tools and accessed only the isolated local login page, 
 browser state. This was **not a TRAE-host run**. The pinned release supports `--codegen python`;
 earlier search snippets with a smaller options list were not authoritative for the installed release.
 
-Python 3.12/Linux and hosted CI remain targets until their jobs run. Windows, Firefox and WebKit are
-not verified. Python Playwright and the MCP server are distinct components; their versions can differ.
+Linux and hosted CI remain targets until their jobs run. Python 3.12.14 was additionally verified on
+macOS in a clean clone. Windows, Firefox and WebKit are not verified. Python Playwright and the MCP
+server are distinct components; their versions can differ.
 
 Sources: [Playwright MCP](https://github.com/microsoft/playwright-mcp),
 [TRAE Agent](https://docs.trae.cn/ide_built-in-agent),
