@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>登录 - Playwright Test Lab</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 32rem; margin: 5rem auto; }
+      form { display: grid; gap: 1rem; padding: 2rem; border: 1px solid #ddd; border-radius: 12px; }
+      label { display: grid; gap: .35rem; }
+      input, button { font: inherit; padding: .7rem; }
+      [role="alert"] { color: #b42318; min-height: 1.5rem; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Playwright Test Lab</h1>
+      <form id="login-form">
+        <label>用户名 <input name="username" autocomplete="username" /></label>
+        <label>密码 <input name="password" type="password" autocomplete="current-password" /></label>
+        <button type="submit">登录</button>
+        <p id="login-error" role="alert"></p>
+      </form>
+    </main>
+    <script>
+      document.querySelector('#login-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const form = new FormData(event.currentTarget);
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({username: form.get('username'), password: form.get('password')})
+        });
+        if (response.ok) {
+          window.location.assign('/dashboard');
+          return;
+        }
+        const payload = await response.json();
+        document.querySelector('#login-error').textContent = payload.detail;
+      });
+    </script>
+  </body>
+</html>

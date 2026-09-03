@@ -1,0 +1,5 @@
+[
+  {"name": "UI synchronisation", "matchedStatuses": ["failed", "broken"], "messageRegex": ".*(Timeout|waiting for|to_be_visible).*"},
+  {"name": "Locator design", "matchedStatuses": ["failed", "broken"], "messageRegex": ".*(strict mode violation|resolved to .* elements).*"},
+  {"name": "Service or environment", "matchedStatuses": ["failed", "broken"], "messageRegex": ".*(500|Connection refused|ConnectError).*"}
+]

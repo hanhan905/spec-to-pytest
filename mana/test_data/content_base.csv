@@ -1,0 +1,2 @@
+data_id,title,content,tags,comment,expected_valid
+BASE_001,我的AI测试实践,用 Playwright MCP 生成可执行测试，并保留完整证据。,"AI测试, Playwright",这是自动生成后的验证评论,true

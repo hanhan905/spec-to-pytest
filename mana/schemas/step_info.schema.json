@@ -1,0 +1,110 @@
+{
+  "$defs": {
+    "StepInfoRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "action": {
+          "minLength": 1,
+          "title": "Action",
+          "type": "string"
+        },
+        "mcp_tool": {
+          "minLength": 1,
+          "title": "Mcp Tool",
+          "type": "string"
+        },
+        "locator_strategy": {
+          "enum": [
+            "role",
+            "label",
+            "test_id",
+            "css"
+          ],
+          "title": "Locator Strategy",
+          "type": "string"
+        },
+        "selector": {
+          "minLength": 1,
+          "title": "Selector",
+          "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": true,
+          "title": "Parameters",
+          "type": "object"
+        },
+        "success_state": {
+          "minLength": 1,
+          "title": "Success State",
+          "type": "string"
+        },
+        "verified_at": {
+          "format": "date-time",
+          "title": "Verified At",
+          "type": "string"
+        },
+        "source_run_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
+          "title": "Source Run Id",
+          "type": "string"
+        },
+        "source_case_id": {
+          "pattern": "^[A-Z0-9][A-Z0-9_-]{0,95}$",
+          "title": "Source Case Id",
+          "type": "string"
+        },
+        "app_version": {
+          "minLength": 1,
+          "title": "App Version",
+          "type": "string"
+        },
+        "evidence_paths": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Evidence Paths",
+          "type": "array"
+        }
+      },
+      "required": [
+        "description",
+        "action",
+        "mcp_tool",
+        "locator_strategy",
+        "selector",
+        "success_state",
+        "verified_at",
+        "source_run_id",
+        "source_case_id",
+        "app_version",
+        "evidence_paths"
+      ],
+      "title": "StepInfoRecord",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "2.0",
+      "default": "2.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "records": {
+      "items": {
+        "$ref": "#/$defs/StepInfoRecord"
+      },
+      "title": "Records",
+      "type": "array"
+    }
+  },
+  "title": "StepInfoStore",
+  "type": "object"
+}

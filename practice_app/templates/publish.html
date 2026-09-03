@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}发布内容 - Playwright Test Lab{% endblock %}
+{% block content %}
+  <section class="form-page" aria-labelledby="publish-title">
+    <h1 id="publish-title">发布内容</h1>
+
+    <div class="message success-message" id="publish-success" role="status" hidden>
+      内容发布成功！
+    </div>
+    <div class="message error-message" id="publish-error" role="alert" hidden></div>
+
+    <form class="publish-form" id="publish-form">
+      <label for="title">标题 <span aria-hidden="true">*</span></label>
+      <div class="field-with-count">
+        <input id="title" name="title" maxlength="50" required placeholder="请输入标题，1-50字" />
+        <span id="title-count" aria-live="polite">0/50</span>
+      </div>
+
+      <label for="content">正文 <span aria-hidden="true">*</span></label>
+      <div class="field-with-count">
+        <textarea
+          id="content"
+          name="content"
+          maxlength="500"
+          required
+          rows="3"
+          placeholder="请输入正文，1-500字"
+        ></textarea>
+        <span id="content-count" aria-live="polite">0/500</span>
+      </div>
+
+      <label for="tags">标签</label>
+      <input id="tags" name="tags" placeholder="可选，多个标签用逗号分隔，如：AI测试, Playwright" />
+      <p class="field-help">可选，重复标签会自动去重。</p>
+
+      <label for="image">图片</label>
+      <label class="file-drop" for="image">
+        <svg class="upload-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 16V4"></path>
+          <path d="m7 9 5-5 5 5"></path>
+          <path d="M5 15v4h14v-4"></path>
+        </svg>
+        <strong>点击选择图片</strong>
+        <span>PNG / JPG，最大 2 MB</span>
+      </label>
+      <input id="image" name="image" type="file" accept="image/png,image/jpeg" />
+      <p class="selected-file" id="selected-file" aria-live="polite" hidden></p>
+
+      <div class="form-actions">
+        <button class="primary-button" id="publish-button" type="submit">发布</button>
+        <a class="secondary-link" href="/feed">返回内容广场</a>
+      </div>
+    </form>
+  </section>
+{% endblock %}
+{% block scripts %}<script src="/static/publish.js"></script>{% endblock %}

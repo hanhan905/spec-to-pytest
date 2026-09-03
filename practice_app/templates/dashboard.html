@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>控制台 - Playwright Test Lab</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 70rem; margin: 2rem auto; padding: 0 1rem; }
+      nav, .toolbar { display: flex; gap: 1rem; align-items: center; justify-content: space-between; }
+      table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+      th, td { border: 1px solid #ddd; padding: .6rem; text-align: left; }
+      section { margin: 2rem 0; padding: 1rem; border: 1px solid #ddd; border-radius: 10px; }
+      button, input { font: inherit; padding: .5rem; }
+      #dynamic-notice { color: #067647; }
+    </style>
+  </head>
+  <body>
+    <nav aria-label="主导航">
+      <h1>自动化测试控制台</h1>
+      <p>当前用户：<strong data-testid="current-user">{{ user.username }}</strong>（{{ user.role }}）</p>
+      <button id="logout">退出</button>
+    </nav>
+
+    <main>
+      <section aria-labelledby="items-title">
+        <h2 id="items-title">项目列表</h2>
+        <div class="toolbar">
+          <label>搜索 <input id="search" type="search" /></label>
+          <div>
+            <button id="sort-asc">名称升序</button>
+            <button id="sort-desc">名称降序</button>
+          </div>
+        </div>
+        <table aria-label="项目表格">
+          <thead><tr><th>ID</th><th>名称</th><th>类别</th><th>状态</th></tr></thead>
+          <tbody id="items-body"></tbody>
+        </table>
+        <p id="items-count" aria-live="polite"></p>
+      </section>
+
+      <section aria-labelledby="interaction-title">
+        <h2 id="interaction-title">交互练习</h2>
+        <button id="open-dialog">打开详情</button>
+        <dialog id="details-dialog" aria-labelledby="dialog-title">
+          <h3 id="dialog-title">详情弹窗</h3>
+          <p>这是可访问的原生 Dialog。</p>
+          <button id="close-dialog">关闭</button>
+        </dialog>
+        <p id="dynamic-notice" aria-live="polite"></p>
+        <iframe title="嵌入状态" src="/frame"></iframe>
+      </section>
+
+      <section aria-labelledby="file-title">
+        <h2 id="file-title">文件练习</h2>
+        <label>选择文件 <input id="upload-file" type="file" /></label>
+        <button id="upload-button">上传</button>
+        <p id="upload-result" aria-live="polite"></p>
+        <a href="/api/download" download>下载 CSV</a>
+      </section>
+    </main>
+
+    <script>
+      let sort = 'asc';
+      async function loadItems() {
+        const q = document.querySelector('#search').value;
+        const response = await fetch(`/api/items?q=${encodeURIComponent(q)}&sort=${sort}&page_size=50`);
+        const payload = await response.json();
+        const body = document.querySelector('#items-body');
+        body.innerHTML = '';
+        for (const item of payload.items) {
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${item.id}</td><td>${item.name}</td><td>${item.category}</td><td>${item.status}</td>`;
+          body.appendChild(row);
+        }
+        document.querySelector('#items-count').textContent = `共 ${payload.total} 条`;
+      }
+      document.querySelector('#search').addEventListener('input', loadItems);
+      document.querySelector('#sort-asc').addEventListener('click', () => { sort = 'asc'; loadItems(); });
+      document.querySelector('#sort-desc').addEventListener('click', () => { sort = 'desc'; loadItems(); });
+      document.querySelector('#open-dialog').addEventListener('click', () => document.querySelector('#details-dialog').showModal());
+      document.querySelector('#close-dialog').addEventListener('click', () => document.querySelector('#details-dialog').close());
+      document.querySelector('#logout').addEventListener('click', async () => {
+        await fetch('/api/logout', {method: 'POST'});
+        window.location.assign('/login');
+      });
+      document.querySelector('#upload-button').addEventListener('click', async () => {
+        const input = document.querySelector('#upload-file');
+        const data = new FormData();
+        data.append('file', input.files[0]);
+        const response = await fetch('/api/upload', {method: 'POST', body: data});
+        const payload = await response.json();
+        document.querySelector('#upload-result').textContent = `${payload.filename}: ${payload.size} bytes`;
+      });
+      setTimeout(() => { document.querySelector('#dynamic-notice').textContent = '动态内容已加载'; }, 300);
+      loadItems();
+    </script>
+  </body>
+</html>
