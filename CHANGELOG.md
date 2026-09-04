@@ -4,7 +4,8 @@
 
 - Policy 2.1: separate execution and workflow gates, frozen structured comparisons,
   check/data events and explicit maintainer review bound to evidence hashes.
-- Recorded project MCP sessions with distinct package/server versions and closed browser segments.
+- Direct, version-pinned Playwright MCP exploration with explicit local-workbench safety limits.
+- Starlette upgraded to 1.6.0 after the release dependency audit identified advisories below 1.3.1.
 - Idempotent logical requests, per-invocation records and read-only legacy inspection.
 - Restricted registered action repairs; wrapper/rebinding and unrelated source changes are rejected.
 
@@ -15,4 +16,4 @@
 - Conservative repair guards; historical candidate replay labelled separately from new AI generation.
 - Pinned TRAE MCP template and data-only Skill.
 
-Not yet released: remaining acceptance checks, maintainer review, license choice and actual hosted CI.
+Not yet released: remaining acceptance checks, maintainer review and actual hosted CI.

@@ -2,9 +2,9 @@
 
 Turn a scenario into reviewable Python Playwright tests—and keep the evidence behind the result.
 
-**Pre-release:** local baseline and evidence checks work. Real TRAE-host acceptance, maintainer
-review of migrated examples, final privacy review, license selection and hosted CI remain release
-gates. No production-readiness or coverage-improvement claim is made.
+**Pre-release:** local baseline and evidence checks work. Maintainer review of the latest TRAE run
+and migrated examples, final privacy review and hosted CI remain release gates. No
+production-readiness or coverage-improvement claim is made.
 
 [中文上手](docs/zh-CN/README.md) · [Architecture](docs/concepts/architecture.md) ·
 [TRAE setup](docs/how-to/trae.md) · [Verification status](docs/reference/acceptance-status.md)
@@ -18,8 +18,8 @@ gates. No production-readiness or coverage-improvement claim is made.
 - TRAE role instructions, a data-expansion Skill and version-pinned Playwright MCP configuration.
 - Checks across case mapping, setup/call/teardown events, JUnit and process exit codes.
 - Separate attempts, conservative repair guards and an explicit known-defect demonstration.
-- Policy 2.1 structured checks, recorded MCP sessions, idempotent requests and separate
-  execution/workflow gates. Semantic and host-delegation review remain explicit.
+- Policy 2.1 structured checks, idempotent requests and separate execution/workflow gates.
+  Direct MCP exploration, semantic review and host-delegation review remain explicit.
 
 This project focuses on the boundary between generated candidates and checked execution records.
 It uses Playwright, Pytest and Allure; it does not replace them or implement an LLM runtime.
@@ -82,5 +82,5 @@ The public-export helper emits only an aggregate allowlist.
 - [Approved design](docs/superpowers/specs/2026-09-03-spec-to-pytest-v0.1-design.md)
 
 Parallel workers, public deployment, Docker/Jenkins delivery and additional AI hosts are not v0.1
-support claims. License selection is pending; do not assume redistribution permission without an
-applicable license. See [Unreleased changes](CHANGELOG.md).
+support claims. The source is available under the [MIT License](LICENSE). See
+[Unreleased changes](CHANGELOG.md).

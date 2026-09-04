@@ -17,5 +17,6 @@ This is not the author's official repository. It preserves the exploration-to-co
 adding frozen plans, earlier data expansion and evidence checks. No article images or long prompt
 blocks are redistributed. Third-party tools are installed through dependencies, not vendored.
 
-License selection and final source/asset review are pending. No license is inferred for material
-whose redistribution rights have not been established. A clean history does not erase attribution.
+The project owner approved the MIT License after source and asset review. Third-party components and
+referenced articles retain their own licenses and attribution. A clean history does not erase
+attribution.

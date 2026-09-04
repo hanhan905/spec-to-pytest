@@ -18,6 +18,11 @@ assertion checks and loopback settings are not an OS sandbox. Use a disposable
 workspace without real credentials and retain host approval controls. Review code
 before promoting an example or using it outside the synthetic local target.
 
+The optional TRAE integration connects directly to the official Playwright MCP server and retains
+its full configured tool set, including powerful code and file operations. MCP exploration is not
+independently authenticated evidence or a security boundary. Use only the isolated synthetic app,
+review requested tool calls and never attach a personal or production browser profile.
+
 ## Required invariants
 
 - Forged, expired or revoked sessions cannot authorize a mutation.

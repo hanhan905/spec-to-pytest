@@ -24,10 +24,9 @@ do not erase the initial assessment or call the maintainer review command to mak
 Do not manufacture a host export or claim that this declaration proves delegation. Actual host
 exports/UI captures go to the private run's `host/` directory for maintainer review.
 
-The generator must see the project recorder's `evidence_begin_run`, `evidence_end_run` and
-`evidence_status` tools. Configured package versions and host-native `browser_*` names are not proof
-of project MCP identity. If the recorder is unavailable, stop the standard route and report it;
-do not silently substitute another browser provider. Read the observed tool schemas before calls.
+The generator must use the configured official Playwright MCP server for local exploration and read
+the observed tool schemas before calls. Direct MCP output is not independently authenticated and
+must not be described as verified evidence. Do not silently substitute another browser provider.
 
 Create one unique `request_id` for each intended full execution. If a tool response is uncertain,
 retry with the SAME request ID and unchanged inputs. An intentional repeat or allowed repair needs

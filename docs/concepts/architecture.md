@@ -4,8 +4,9 @@ Four responsibilities stay separate: the local practice app; maintained automati
 generation host; and deterministic evidence checking. `framework/ai/` contains no LLM client.
 
 The TRAE built-in Agent coordinates the generator and data expander. The generator designs cases
-and writes Python; the expander writes CSV. The Skill describes that data process. MCP operates a
-real local browser. Pytest executes assertions. The reconciler checks the resulting records.
+and writes Python; the expander writes CSV. The Skill describes that data process. The official MCP
+server directly operates a real local browser. Pytest executes assertions. The reconciler checks the
+formal execution records; it does not authenticate the MCP exploration transcript.
 
 ## Why explore before running tests?
 

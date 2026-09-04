@@ -1,5 +1,8 @@
 # AI acceptance hardening — implementation plan
 
+Historical implementation record: the custom MCP recorder was later removed by the approved direct
+Playwright MCP design. Other completed controls remain in force.
+
 The maintainer approved the written 2.1 design on 2026-09-04. Implement in an isolated
 checkout, synchronize only reviewed tracked changes, commit locally and do not push.
 The writing-plans skill is unavailable in this environment; this explicit plan is

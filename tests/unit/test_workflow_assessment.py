@@ -7,7 +7,6 @@ import pytest
 from framework.ai.acceptance import assess, record_review
 from framework.ai.contracts import CaseRunResult, CaseStatus, RunManifest
 from framework.ai.integrity import digest
-from framework.ai.mcp_evidence import Segment, inspect_mcp
 from scripts.export_public_summary import public_summary
 from scripts.finalise_ai_run import finalise
 
@@ -137,55 +136,14 @@ def fixture_run(tmp_path: Path) -> tuple[Path, RunManifest]:
     return run, manifest
 
 
-def synthetic_segment(run: Path) -> Segment:
-    segment = Segment(
-        run,
-        "synthetic-session",
-        nonce="fixture",
-        identity={
-            "package": "@playwright/mcp",
-            "configured_version": "0.0.80",
-            "resolved_version": "0.0.80",
-            "entrypoint_digest": "0" * 64,
-        },
-        handshake={
-            "serverInfo": {"name": "Playwright", "version": "synthetic"},
-            "serverTools": [
-                {"name": name} for name in ["browser_navigate", "browser_snapshot", "browser_click"]
-            ],
-            "protocolVersion": "2025-06-18",
-        },
-        health={"application_id": "spec-to-pytest"},
-    )
-    for seq, tool in enumerate(
-        ["browser_navigate", "browser_snapshot", "browser_click", "browser_snapshot"], 1
-    ):
-        arguments = {"url": "http://127.0.0.1:8000/login"} if tool == "browser_navigate" else {}
-        segment.record(
-            "request",
-            {
-                "jsonrpc": "2.0",
-                "id": seq,
-                "method": "tools/call",
-                "params": {"name": tool, "arguments": arguments},
-            },
-            tool=tool,
-        )
-        segment.record(
-            "response", {"jsonrpc": "2.0", "id": seq, "result": {"content": []}}, tool=tool
-        )
-    segment.seal()
-    return segment
-
-
-def test_green_execution_without_mcp_or_review_is_unverified(tmp_path: Path) -> None:
+def test_green_execution_without_review_is_unverified(tmp_path: Path) -> None:
     run, manifest = fixture_run(tmp_path)
     (run / "agent-declarations.json").write_text('{"all_agents_called": true}')
     result = assess(run, manifest)
     assert result.execution_gate == "passed"
     assert result.workflow_gate == "unverified"
-    assert "project_mcp_recording_missing" in result.reasons
     assert "reviewed_host_delegation_evidence_required" in result.reasons
+    assert result.evidence_basis["mcp_exploration"] == "host_review_only"
     assert public_summary(manifest, result)["workflow_gate"] == "unverified"
 
 
@@ -197,9 +155,8 @@ def test_missing_required_check_rejects_otherwise_green_run(tmp_path: Path) -> N
     assert "missing_or_duplicate_check_events" in result.reasons
 
 
-def test_mcp_evidence_plus_explicit_review_and_capture_are_needed(tmp_path: Path) -> None:
+def test_explicit_review_and_host_capture_are_needed(tmp_path: Path) -> None:
     run, manifest = fixture_run(tmp_path)
-    synthetic_segment(run)
     assert assess(run, manifest).workflow_gate == "unverified"
     (run / "host").mkdir()
     (run / "host/synthetic-capture.txt").write_text("Synthetic reviewed three-phase host capture")
@@ -229,37 +186,6 @@ def test_agent_statement_cannot_be_a_reviewed_host_capture(tmp_path: Path) -> No
             capture_kind="agent_statement",
             delegation_reviewed=True,
         )
-
-
-def test_changed_mcp_payload_is_rejected(tmp_path: Path) -> None:
-    run, _ = fixture_run(tmp_path)
-    segment = synthetic_segment(run)
-    (segment.root / "payloads/000001.json").write_text("{}")
-    assert inspect_mcp(run)[0] == "rejected"
-
-
-@pytest.mark.parametrize(
-    "field", ["resolved_version", "handshake", "run_id", "health", "tool_catalog"]
-)
-def test_self_consistent_but_wrong_mcp_identity_cannot_verify(tmp_path: Path, field: str) -> None:
-    run, _ = fixture_run(tmp_path)
-    segment = synthetic_segment(run)
-    info = json.loads((segment.root / "segment.json").read_text())
-    if field == "resolved_version":
-        info["identity"][field] = "unknown"
-    elif field == "handshake":
-        info["handshake"]["serverInfo"]["name"] = "Different server"
-    elif field == "run_id":
-        info[field] = "different-run"
-    elif field == "tool_catalog":
-        info["handshake"]["serverTools"] = []
-    else:
-        info["health"] = {"application_id": "different-app"}
-    (segment.root / "segment.json").write_text(json.dumps(info))
-    receipt = json.loads((segment.root / "receipt.json").read_text())
-    receipt["segment.json"] = digest(segment.root / "segment.json")
-    (segment.root / "receipt.json").write_text(json.dumps(receipt))
-    assert inspect_mcp(run)[0] == "rejected"
 
 
 def test_legacy_inspection_does_not_compare_current_tree_or_write(tmp_path: Path) -> None:

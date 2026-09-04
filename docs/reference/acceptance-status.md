@@ -1,8 +1,8 @@
 # Local acceptance checkpoint — 2026-09-03
 
 The local engineering build is implemented and verified. **The complete v0.1 public release is
-not approved yet.** A fully evidenced TRAE-host run, maintainer promotion of a candidate,
-license choice and actual hosted CI remain outstanding. SECURITY.md was approved and committed.
+not approved yet.** Maintainer review of the latest TRAE-host run, promotion of a candidate and
+actual hosted CI remain outstanding. SECURITY.md and the MIT License were approved and committed.
 
 ## Verified locally
 
@@ -74,7 +74,7 @@ and applied; license/source distribution decisions remain separate gates.
 1. Run a new scenario in the actual TRAE host and inspect real role calls, generated assets and
    host/model provenance. A standalone MCP probe and historical replay cannot substitute for this.
 2. Maintainer review of `examples/candidates/content_lifecycle/`; do not call it approved before that.
-3. Choose a license after source/asset review and establish a private vulnerability reporting route.
+3. Establish a private vulnerability reporting route before public visibility.
 4. Separately authorize remote repository creation/push, then run Linux/hosted CI before release.
 5. Repeat publication-package/history checks after any changes. No social post has been sent.
 
@@ -90,9 +90,10 @@ project-MCP identity was not tied to the actual calls, one error-detail check wa
 than its plan, an object wrapper preserved assertion syntax while changing the request
 implementation, and duplicate-run attribution lacked caller evidence.
 
-The historical run and generated sources remain unchanged. The approved
+The historical run and generated sources remain unchanged. The earlier
 [2.1 hardening design](../superpowers/specs/2026-09-04-ai-acceptance-hardening-design.md)
-adds separate gates, a real MCP recorder, frozen comparisons, narrow action repairs
-and idempotent request records. A standalone recorded MCP probe is not a replacement
-for a fresh TRAE-host acceptance run. Local implementation verification is recorded
-in the [new implementation plan](../superpowers/plans/2026-09-04-ai-acceptance-hardening.md).
+introduced a recorder that was later removed by the approved
+[direct-MCP design](../superpowers/specs/2026-09-04-mcp-release-hardening-design.md). Structured
+comparisons, narrow action repairs and idempotent request records remain. Direct MCP exploration is
+not a replacement for reviewed host evidence. Local implementation history is retained in the
+[earlier plan](../superpowers/plans/2026-09-04-ai-acceptance-hardening.md).

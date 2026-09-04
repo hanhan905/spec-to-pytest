@@ -53,10 +53,6 @@ def artifact_basis(run: Path, manifest: RunManifest) -> dict[str, str]:
         "check-bindings.json",
         f"attempts/{manifest.final_attempt}/receipt.json",
     ]
-    paths.extend(
-        p.relative_to(run).as_posix()
-        for p in sorted((run / "exploration/mcp").glob("*/receipt.json"))
-    )
     return {name: digest(contained_path(run, name)) for name in paths if (run / name).is_file()}
 
 
@@ -120,11 +116,7 @@ def assess(
         result.reviewed_artifacts = artifact_basis(run, manifest)
     except (ValueError, OSError, KeyError, TypeError):
         rejected.append("invalid_contract_evidence")
-    from framework.ai.mcp_evidence import inspect_mcp
-
-    mcp_state, mcp_reasons = inspect_mcp(run)
-    result.evidence_basis["mcp"] = mcp_state
-    (rejected if mcp_state == "rejected" else pending).extend(mcp_reasons)
+    result.evidence_basis["mcp_exploration"] = "host_review_only"
     if review_path is None:
         pending.append("maintainer_semantic_review_required")
         if manifest.source == "trae_orchestrated":

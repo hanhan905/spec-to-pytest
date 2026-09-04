@@ -31,12 +31,10 @@ Return the plan path; let the coordinator invoke the data expander.
 3. Use Playwright MCP to explore the separate local app on port 8000. Read a fresh accessibility
    snapshot before choosing an action and check the resulting state. Retain failed attempts locally.
    Exploration is real interaction, but does not count as a passed pytest case.
-   Call `evidence_status` and verify the actual installed package and server information. Bind with
-   `evidence_begin_run` using this run's ID and correlation nonce; never an arbitrary file path.
-   Observe navigate → snapshot → action → snapshot through this recorder. End with
-   `evidence_end_run`, which closes the isolated browser and seals the segment. Inspect tool schemas:
-   the pinned browser_type tool uses `target`, not an assumed historical `ref` parameter.
-   Missing recorder tools or incomplete evidence must not be presented as verified project MCP use.
+   Observe navigate → snapshot → action → snapshot with the configured official server. Inspect tool
+   schemas: the pinned browser_type tool uses `target`, not an assumed historical `ref` parameter.
+   The full server includes powerful code and file operations; use only the synthetic loopback app,
+   retain host approvals and never present direct MCP output as independently verified evidence.
 4. Generate one traceable test per case in `tests/generated/<run_id>/`. Use the framework/data contract,
    explicit business assertions, Allure labels and stable waits. Run Ruff on only the generated directory.
    Import `verify` directly from `framework.ai.checks`; invoke each planned check once in the test

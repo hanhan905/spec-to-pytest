@@ -1,28 +1,28 @@
 # Run a scenario with TRAE
 
-A real TRAE-host acceptance run is still a release gate. The standalone MCP probe and historical
-replay do not establish that host orchestration passed.
+A reviewed TRAE-host run is still a release gate. Historical replay does not establish that host
+orchestration passed.
 
 ## Prepare the project
 
 Run `make setup` and `make baseline` first. The optional AI path needs Node.js and your TRAE
 account. The Python project itself does not request an LLM API key.
 
-For policy 2.1, install the locked optional runtime and generate a recorder proposal:
+Install the locked optional runtime and create the ignored direct MCP configuration:
 
 ```sh
 npm ci --prefix integrations/trae --ignore-scripts
-uv run --frozen python -m scripts.configure_trae --recorded
+uv run --frozen python -m scripts.configure_trae
 ```
 
-Review `.trae/mcp.recorded.proposed.json` and merge its `playwright` entry into project MCP settings,
-preserving unrelated servers. The helper never overwrites `.trae/mcp.json`. Reload the server and
-confirm `evidence_begin_run`, `evidence_end_run` and `evidence_status` appear alongside browser tools.
-Use `.trae`, not `.trea`. The legacy direct-server template supports unrecorded exploration only;
-neither that config nor host-native `browser_*` names prove the new project-MCP claim.
+Review `.trae/mcp.json`, preserving any unrelated servers if you merge it manually. The helper never
+overwrites an existing file. Reload the server and confirm the official `browser_*` tools appear.
+Use `.trae`, not `.trea`.
 
-The adapter records installed package and server-reported versions separately. Read actual tool
-schemas: pinned MCP 0.0.80 uses `target` for `browser_type`, not the old `ref` parameter.
+Read actual tool schemas: pinned MCP 0.0.80 uses `target` for `browser_type`, not the old `ref`
+parameter. The server exposes powerful code and file tools; retain TRAE approvals and use only this
+synthetic workspace. `--isolated`, loopback origins and output limits reduce accidental exposure but
+are not a security sandbox.
 
 Enable `.agents/skills` in Skills and Commands settings. A same-named skill under `.trae/skills`
 takes priority; resolve ambiguity first. See [official settings](https://docs.trae.cn/ide_skills).
@@ -69,13 +69,9 @@ then request exploration/generation and execution. Inspect artifacts, not just t
 The generator uses `scripts.run_local` with the actual run directory, candidate plan, candidate CSV
 and `--base-url http://127.0.0.1:8765 --request-id <logical_request_id>`.
 All paths must come from this run, never an older frozen batch.
-Save exact MCP snapshots/tool outputs into the run's exploration directory; `reports/mcp` is scratch
-output, not evidence automatically associated with every run. Never invent a tool transcript.
-
-Use schema 2.1 [structured checks](check-contracts.md). Bind the recorder with `evidence_begin_run`,
-using this run's ID and `correlation_nonce` from `run.json`. Retain navigate → snapshot → action →
-snapshot through the recorder, then call `evidence_end_run`. It closes the isolated browser and
-seals the segment under `exploration/mcp/`; incomplete segments cannot verify MCP use.
+`reports/mcp` is ignored scratch output, not independently authenticated evidence. Use schema 2.1
+[structured checks](check-contracts.md). Explore with navigate → snapshot → action → snapshot, but
+do not describe successful exploration as a passed test or a verified transcript.
 
 Host permissions, login or usage limits may interrupt execution. Record interventions rather than
 claiming an unattended run. If delegation is unavailable, use the generator plus the data Skill and
@@ -87,8 +83,6 @@ browser artifacts. Record visible TRAE/model/MCP versions and use `not_exposed_b
 versions. Standard orchestration, fallback and historical replay are separate verification claims.
 
 Report execution and workflow gates separately. Missing host captures or maintainer semantic review
-leaves workflow `unverified`, even with all tests green. Do not ask the generator to self-approve.
-See [workflow acceptance and request retries](workflow-acceptance.md).
-
-Optional: `uv run --frozen python -m scripts.probe_mcp` runs the real pinned MCP through the recorder
-against an owned local app. This is a standalone diagnostic, not TRAE delegation acceptance.
+leaves workflow `unverified`, even with all tests green. Direct MCP output is reviewed only as part
+of the host capture; do not ask the generator to self-approve. See
+[workflow acceptance and request retries](workflow-acceptance.md).

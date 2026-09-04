@@ -1,7 +1,8 @@
 # Contributing
 
-The repository is being prepared for its first release. License selection, maintainer review of
-historical examples and a real TRAE host acceptance run are still release gates.
+The repository is being prepared for its first release. Maintainer review of historical examples,
+the latest TRAE host run and hosted CI are still release gates. Contributions are licensed under
+the repository's MIT License.
 
 ## Work locally
 

@@ -6,9 +6,9 @@ New runs use policy 2.1. `manifest.json` keeps the Pytest execution result;
 | Result | Meaning |
 |---|---|
 | Execution `passed` / `failed` / `blocked` | Collection, phase events, JUnit, process result and receipts |
-| Workflow `unverified` | MCP/host evidence or semantic review is absent |
+| Workflow `unverified` | Host evidence or semantic review is absent |
 | Workflow `rejected` | A required check is missing/unsuccessful, evidence conflicts, or review is stale/rejected |
-| Workflow `verified` | Checks and recorded MCP evidence match; the maintainer reviewed semantics and claimed delegation |
+| Workflow `verified` | Checks match; the maintainer reviewed semantics and host delegation evidence |
 | Workflow `not_applicable` | Baseline, synthetic fixture or replay makes no fresh AI claim |
 
 `run_local` exits according to execution only. Assess the AI claim separately:
@@ -23,8 +23,8 @@ run. Do not use a Pytest zero exit code alone as a release approval.
 
 ## Maintainer review, not Agent self-approval
 
-Inspect planned comparisons, real observation sources, failure evidence, repairs and
-the recorder segment. For a dual-Agent claim, inspect real TRAE role calls and place
+Inspect planned comparisons, real observation sources, failure evidence and repairs. Direct MCP
+exploration is not independently authenticated. For a dual-Agent claim, inspect real TRAE role calls and place
 the host export or UI capture inside this run's private `host/` directory. An Agent's
 narrative or JSON declaration is not a host capture.
 The coordinator also retains `candidate-delegations.json`: three ordered role/phase
@@ -47,8 +47,8 @@ uv run --frozen python -m scripts.accept_ai_run reports/runs/RUN_ID \
   --review reports/runs/RUN_ID/reviews/REVIEW_ID.json --save
 ```
 
-A review binds to one attempt and artifact hashes. Changed inputs, receipts, MCP
-segments or captures invalidate it. Use `--semantic-alignment rejected` for a rejected
+A review binds to one attempt and artifact hashes. Changed inputs, receipts or captures invalidate
+it. Use `--semantic-alignment rejected` for a rejected
 interpretation. Never edit the old review or execution result to reverse a decision.
 
 The local operator is trusted. The confirmation flag is not authentication against a
@@ -85,8 +85,7 @@ runs, under `reports/views/`.
 
 Public export includes both gates and omits raw payloads, paths, host/process IDs
 and review content. The automatic exporter does not infer approval merely from
-finding a review file. License choice, publication and sample promotion require
-separate approval.
+finding a review file. Publication and sample promotion require separate approval.
 
 To export one explicitly reviewed result, use `scripts.export_public_summary --run-dir
 reports/runs/RUN_ID --review reports/runs/RUN_ID/reviews/REVIEW_ID.json`. The source label

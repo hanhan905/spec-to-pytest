@@ -8,7 +8,8 @@ This repository is a local testing workbench, not a production service or execut
 - Keep application, framework, generation, and evidence reconciliation responsibilities separate.
 - Add regression tests for behavior changes; run lint, types, unit/API and relevant browser tests.
 - Preserve source attribution. Never import private configuration, browser state or raw reports.
-- Do not publish, create remote repositories, choose a license or send social posts without approval.
+- Do not publish, create remote repositories, change the approved license or send social posts
+  without approval.
 - Never weaken a test merely to obtain a green run. Label unverified capabilities explicitly.
 
 ## Running a generated scenario
@@ -23,9 +24,9 @@ This repository is a local testing workbench, not a production service or execut
 - Policy 2.1: at most three registered action-locator/bounded-wait repairs. No imports, new wrappers,
   rebinding, API-client changes, data edits or check-locator changes after freezing; start a new run.
 - Pytest events, JUnit and process results decide outcomes, not model-written summaries.
-- Execution success is not AI workflow verification. Use the project MCP recorder and structured
-  check helpers; disclose missing host evidence and pending semantic review.
-- Generators may not write receipts, raw recorder evidence, request ledgers, assessments, reviews,
+- Execution success is not AI workflow verification. Use structured check helpers and disclose
+  missing host evidence, unverified MCP exploration and pending semantic review.
+- Generators may not write receipts, request ledgers, assessments, reviews,
   maintainer approvals or public-example promotions. Use their owning tools; do not self-approve.
 - Existing legacy runs and their generated sources are read-only. Do not upgrade or overwrite them.
 - Host permissions remain in force. Do not access production accounts, real secrets or external sites.

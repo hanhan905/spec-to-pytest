@@ -27,6 +27,6 @@
   of a duplicate execution from its timing alone.
 - The final verdict comes from a full acceptance attempt's collection, phase events, JUnit and exit code.
   Model-written explanations never replace those artifacts.
-- Execution and AI workflow gates are separate. Recorded MCP traffic does not prove custom-Agent
+- Execution and AI workflow gates are separate. Direct MCP observations do not prove custom-Agent
   delegation; structural checks do not prove arbitrary natural-language semantics. Maintainer
   review is required before workflow verification or public-example promotion.

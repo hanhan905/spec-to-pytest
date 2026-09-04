@@ -1,5 +1,9 @@
 # AI acceptance hardening — design 2.1
 
+> Historical design: its custom MCP-recorder section was superseded by the approved
+> [direct Playwright MCP design](2026-09-04-mcp-release-hardening-design.md). The structured
+> execution, repair, request and review controls remain applicable.
+
 Date: 2026-09-04
 
 Status: written specification approved by the maintainer on 2026-09-04.
