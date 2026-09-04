@@ -2,9 +2,9 @@
 
 Turn a scenario into reviewable Python Playwright tests—and keep the evidence behind the result.
 
-**Pre-release:** local baseline and evidence checks work. Maintainer review of the latest TRAE run
-and migrated examples, final privacy review and hosted CI remain release gates. No
-production-readiness or coverage-improvement claim is made.
+**Public preview:** local checks, dependency audits and the initial GitHub Actions workflow pass.
+Maintainer review of the latest TRAE run and migrated examples remains open. No production-readiness
+or coverage-improvement claim is made.
 
 [中文上手](docs/zh-CN/README.md) · [Architecture](docs/concepts/architecture.md) ·
 [TRAE setup](docs/how-to/trae.md) · [Verification status](docs/reference/acceptance-status.md)

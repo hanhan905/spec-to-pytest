@@ -59,9 +59,9 @@ There is no security certification or production support promise. A secret scan
 does not replace vulnerability review, and a passing test does not prove the
 absence of a vulnerability.
 
-Private vulnerability reporting is not configured before repository publication.
-Do not post secrets, full traces or exploit data in a public issue. During local
-evaluation, use an existing private contact channel with the maintainer. A private
-reporting route must be established before public launch.
+Private vulnerability reporting is enabled on the public GitHub repository. Use the repository's
+**Security → Advisories → Report a vulnerability** flow. Do not post secrets, full traces or exploit
+data in a public issue. During offline local evaluation, use an existing private contact channel
+with the maintainer.
 
 This policy changes neither host permissions nor the user's approval requirements.

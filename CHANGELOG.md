@@ -16,4 +16,5 @@
 - Conservative repair guards; historical candidate replay labelled separately from new AI generation.
 - Pinned TRAE MCP template and data-only Skill.
 
-Not yet released: remaining acceptance checks, maintainer review and actual hosted CI.
+Public preview is live. A tagged v0.1 still requires maintainer review of the candidate example and
+the latest TRAE workflow evidence.

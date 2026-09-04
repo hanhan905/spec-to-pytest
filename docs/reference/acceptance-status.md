@@ -1,8 +1,9 @@
-# Local acceptance checkpoint — 2026-09-03
+# Public preview checkpoint — 2026-09-04
 
-The local engineering build is implemented and verified. **The complete v0.1 public release is
-not approved yet.** Maintainer review of the latest TRAE-host run, promotion of a candidate and
-actual hosted CI remain outstanding. SECURITY.md and the MIT License were approved and committed.
+The engineering build is public as an early preview. Local checks, dependency audits, initial GitHub
+Actions, dependency graph and secret scanning passed. Private vulnerability reporting and CodeQL
+default setup are enabled. **A tagged v0.1 release is not approved yet:** maintainer semantic/host
+review of the latest TRAE run and promotion of a candidate remain outstanding.
 
 ## Verified locally
 
@@ -69,14 +70,13 @@ and applied; license/source distribution decisions remain separate gates.
 - Restart validation exposed TIME_WAIT being mistaken for an active port owner. SO_REUSEADDR fixed
   that case while the separate occupied-listener test still rejects unrelated services.
 
-## Remaining release gates
+## Remaining tagged-release gates
 
 1. Run a new scenario in the actual TRAE host and inspect real role calls, generated assets and
    host/model provenance. A standalone MCP probe and historical replay cannot substitute for this.
 2. Maintainer review of `examples/candidates/content_lifecycle/`; do not call it approved before that.
-3. Establish a private vulnerability reporting route before public visibility.
-4. Separately authorize remote repository creation/push, then run Linux/hosted CI before release.
-5. Repeat publication-package/history checks after any changes. No social post has been sent.
+3. Repeat publication-package/history checks after later release changes and review any CodeQL or
+   Dependabot alerts before tagging v0.1. No social post has been sent.
 
 See [tool versions](tool-versions.md), [visual QA](visual-qa.md), and
 [implementation plan](../superpowers/plans/2026-09-03-v0.1-implementation.md).
